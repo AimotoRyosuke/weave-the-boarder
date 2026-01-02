@@ -5,7 +5,7 @@ import 'package:weave_the_border/models/game/player_color.dart';
 import 'package:weave_the_border/models/game/position.dart';
 
 void main() {
-  test('initial state mirrors RULE.md setup', () {
+  test('初期状態で2人のプレイヤーと中央にエネルギーが配置される', () {
     final gameState = GameState.initial();
     final center = Position(
       row: GameConstants.boardSize ~/ 2,
@@ -37,7 +37,7 @@ void main() {
     );
   });
 
-  test('serializes and deserializes symmetrically', () {
+  test('JSON化→復元で元の状態に戻る', () {
     final gameState = GameState.initial();
     final json = gameState.toJson();
     final restored = GameState.fromJson(json);
