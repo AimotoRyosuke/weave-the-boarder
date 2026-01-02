@@ -8,6 +8,10 @@
 - モデルクラスのフィールドにfreezedのクラスが入る時はそのfactoryに`@JsonSerializable(explicitToJson: true)`を付けてください。
 - enumのextentionは作らず、enumにgetterや関数を作成するようにしてください。
 
+## テスト
+
+- groupやtestの説明は日本語で記載すること
+
 ## 返事のルール
 
 - このリポジトリでは、ユーザーからの指示に対して**常に日本語**で応答してください。
