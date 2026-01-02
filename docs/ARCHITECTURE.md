@@ -269,13 +269,13 @@ Firebase Database → RoomSyncProvider → GameStateProvider → UI Update
 
 ## 状態管理パターン（Riverpod）
 
-### StateNotifierProvider パターン
+### NotifierProvider パターン
 
 ```dart
 @riverpod
-class GameState extends _$GameState {
+class GameController extends _$GameController {
   @override
-  GameStateModel build() => GameStateModel.initial();
+  GameState build() => GameState.initial();
   
   void executeAction(ActionType action) {
     // ロジック実行

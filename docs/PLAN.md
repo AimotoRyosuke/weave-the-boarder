@@ -24,7 +24,7 @@
    - Firebase 初期化のスケルトン（`firebase_provider` や `core/constants` の定数）を置き、`.plist`/`json` の配置方法とセキュリティルールの定義方法をチームに共有。
 
 5. **データモデル構築**
-   - `models/game` で Freezed/JSON モデル（`GameStateModel`, `Board`, `Cell`, `Player`, `BorderEdge`, `ActionType`）を定義し、シリアライズ形式を明示。
+   - `models/game` で Freezed/JSON モデル（`GameState`, `Board`, `Cell`, `Player`, `BorderEdge`, `ActionType`）を定義し、シリアライズ形式を明示。
    - `models/online/room` など Firebase 用モデルも同様に整備し、`freezed` で `.freezed.dart`/`.g.dart` を生成するルーチンを確立。
    - モデルに対するユニットテスト（`test/models/`）を用意し、シリアライズ/バリデーションが破綻していないことを確認。
 
