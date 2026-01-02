@@ -38,7 +38,7 @@ sealed class GameState with _$GameState {
     );
   }
 
-    factory GameState.fromJson(Map<String, dynamic> json) =>
+  factory GameState.fromJson(Map<String, dynamic> json) =>
       _$GameStateFromJson(json);
 
   Player player(PlayerColor color) =>
