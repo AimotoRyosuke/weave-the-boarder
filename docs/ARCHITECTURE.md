@@ -171,17 +171,17 @@ lib/
 ### ローカル対戦
 
 ```text
-User Action → GameStateProvider → GameLogicProvider → UI Update
+User Action → GameControllerProvider → UI Update
 ```
 
 ### オンライン対戦
 
 ```text
 [ホスト側]
-User Action → GameStateProvider → FirebaseRoomService → Firebase Database
+User Action → GameControllerProvider → FirebaseRoomService → Firebase Database
 
 [ゲスト側]
-Firebase Database → RoomSyncProvider → GameStateProvider → UI Update
+Firebase Database → RoomSyncProvider → GameControllerProvider → UI Update
 ```
 
 ---
