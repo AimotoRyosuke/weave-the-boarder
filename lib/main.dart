@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import 'core/constants/app_theme.dart';
-import 'providers/online/firebase_provider.dart';
-import 'screens/home/home_screen.dart';
+import 'package:weave_the_border/core/constants/app_theme.dart';
+import 'package:weave_the_border/providers/online/firebase_provider.dart';
+import 'package:weave_the_border/screens/home/home_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
