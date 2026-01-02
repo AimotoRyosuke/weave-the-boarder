@@ -6,4 +6,5 @@ abstract class GameConstants {
   static const int borderTokensPerPlayer = 10;
   static const int maxEnergyTokens = 5;
   static const int initialCenterEnergy = 3;
+  static const int areaBonusScore = 3;
 }
