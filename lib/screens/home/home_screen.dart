@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gap/gap.dart';
 
 /// フェーズ4では仮UIとしてモード選択のカードを表示。
 class HomeScreen extends StatelessWidget {
@@ -12,19 +13,25 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Weave the Border'), centerTitle: true),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const Gap(48),
+            const Text(
+              '境界（きょうかい）を編め',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
+            ),
+            const Gap(24),
             const Text(
               'どちらの対戦モードで始めますか？',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
             ),
-            const SizedBox(height: 16),
+            const Gap(16),
             ..._modeCards,
-            const SizedBox(height: 24),
+            const Gap(24),
             Text(
               'この画面はフェーズ4の環境構築完了後に詳細実装を進めます。',
               style: Theme.of(context).textTheme.bodyMedium,
