@@ -68,7 +68,7 @@
 - [x] フェーズ2（アーキテクチャ検討）：`docs/ARCHITECTURE.md` を元にディレクトリ/データフローを整理
 - [x] フェーズ3（開発計画の作成）：この `PLAN.md` により段階とチェックポイントを確立
 - [x] フェーズ4（依存関係と環境整備）：`flutter pub get`・`flutter analyze` を通し、Firebase 初期化スケルトンを配置
-- [ ] フェーズ5（データモデル構築）：Freezed/JSON モデル生成 + `test/models/` でシリアライズ検証
+- [x] フェーズ5（データモデル構築）：Freezed/JSON モデル生成 + `test/models/` でシリアライズ検証
 - [ ] フェーズ6（ゲームロジック）：`services/game` + `providers/game` の基本アクションと特殊アクションのテストが通過
 - [ ] フェーズ7（ローカル UI）：各画面のレンダリングと `GameState` 連携を `widget_test` で確認
 - [ ] フェーズ8（オンライン同期）：ホスト/ゲストで Firebase Room の CRUD・同期が安定、セキュリティルール適用済み
