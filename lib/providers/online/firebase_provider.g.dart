@@ -50,4 +50,4 @@ final class FirebaseAppProvider
   }
 }
 
-String _$firebaseAppHash() => r'7cc2514ee3e9bbf1ce64460648e3af2a684f94ae';
+String _$firebaseAppHash() => r'504316ad24236accab06f9389afff19e5ad8f8a1';
