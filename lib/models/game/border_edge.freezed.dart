@@ -212,8 +212,8 @@ return $default(_that.anchor,_that.orientation,_that.owner,_that.isFortified);ca
 }
 
 /// @nodoc
-@JsonSerializable()
 
+@JsonSerializable(explicitToJson: true)
 class _BorderEdge extends BorderEdge {
   const _BorderEdge({required this.anchor, required this.orientation, required this.owner, this.isFortified = false}): super._();
   factory _BorderEdge.fromJson(Map<String, dynamic> json) => _$BorderEdgeFromJson(json);

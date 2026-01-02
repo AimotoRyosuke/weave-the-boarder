@@ -24,6 +24,7 @@ extension BorderOrientationX on BorderOrientation {
 @freezed
 sealed class BorderEdge with _$BorderEdge {
   const BorderEdge._();
+  @JsonSerializable(explicitToJson: true)
   const factory BorderEdge({
     required Position anchor,
     required BorderOrientation orientation,

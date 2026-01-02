@@ -15,7 +15,7 @@ _BorderEdge _$BorderEdgeFromJson(Map<String, dynamic> json) => _BorderEdge(
 
 Map<String, dynamic> _$BorderEdgeToJson(_BorderEdge instance) =>
     <String, dynamic>{
-      'anchor': instance.anchor,
+      'anchor': instance.anchor.toJson(),
       'orientation': _$BorderOrientationEnumMap[instance.orientation]!,
       'owner': _$PlayerColorEnumMap[instance.owner]!,
       'isFortified': instance.isFortified,
