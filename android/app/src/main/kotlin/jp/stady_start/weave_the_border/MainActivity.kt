@@ -1,4 +1,4 @@
-package com.example.weave_the_border
+package jp.stady_start.weave_the_border
 
 import io.flutter.embedding.android.FlutterActivity
 

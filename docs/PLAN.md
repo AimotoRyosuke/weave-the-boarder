@@ -62,7 +62,7 @@
 - [x] フェーズ1（ゲームルールの作成）：`RULE.md` を確定し、ルールベースを文書化
 - [x] フェーズ2（アーキテクチャ検討）：`docs/ARCHITECTURE.md` を元にディレクトリ/データフローを整理
 - [x] フェーズ3（開発計画の作成）：この `PLAN.md` により段階とチェックポイントを確立
-- [ ] フェーズ4（依存関係と環境整備）：`flutter pub get`・`flutter analyze` を通し、Firebase 初期化スケルトンを配置
+- [x] フェーズ4（依存関係と環境整備）：`flutter pub get`・`flutter analyze` を通し、Firebase 初期化スケルトンを配置
 - [ ] フェーズ5（データモデル構築）：Freezed/JSON モデル生成 + `test/models/` でシリアライズ検証
 - [ ] フェーズ6（ゲームロジック）：`services/game` + `providers/game` の基本アクションと特殊アクションのテストが通過
 - [ ] フェーズ7（ローカル UI）：各画面のレンダリングと `GameState` 連携を `widget_test` で確認

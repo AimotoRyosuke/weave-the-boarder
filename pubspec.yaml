@@ -12,6 +12,7 @@ dependencies:
   cupertino_icons: ^1.0.8  # iOSスタイルアイコン
   hooks_riverpod: ^3.1.0  # フック対応の状態管理
   flutter_hooks: ^0.21.3+1  # フック機能
+  gap: ^3.0.1  # レイアウト間隔用ユーティリティ
   riverpod_annotation: ^4.0.0  # Riverpodコード生成用アノテーション
   freezed_annotation: ^3.1.0  # イミュータブルモデル用アノテーション
   json_annotation: ^4.9.0  # JSONシリアライズ用アノテーション
