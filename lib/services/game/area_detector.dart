@@ -38,6 +38,9 @@ class AreaDetector {
           if (neighborCell == null || neighborCell.owner != color) {
             continue;
           }
+          if (BorderHelper.hasBorderBetween(current, neighbor, board.borders)) {
+            continue;
+          }
           if (visited.add(neighbor.key)) {
             queue.add(neighbor);
           }
