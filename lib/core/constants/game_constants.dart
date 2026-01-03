@@ -2,9 +2,10 @@
 abstract class GameConstants {
   GameConstants._();
 
-  static const int boardSize = 5;
-  static const int borderTokensPerPlayer = 10;
-  static const int maxEnergyTokens = 5;
-  static const int initialCenterEnergy = 3;
-  static const int areaBonusScore = 3;
+  static const int boardSize = 7;
+  static const int cellsToWin = 15;
+  static const int shortWallTokensPerPlayer = 5;
+  static const int longWallTokensPerPlayer = 5;
+  static const int initialCenterEnergy = 5;
+  static const int actionsPerTurn = 1;
 }

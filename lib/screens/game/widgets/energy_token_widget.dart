@@ -22,18 +22,11 @@ class EnergyTokenWidget extends StatelessWidget {
                 color: Colors.black38,
                 blurRadius: 4,
                 offset: Offset(2, 2),
-              )
+              ),
             ],
           ),
-          child: Center(
-            child: Text(
-              '${stack.count}',
-              style: const TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
+          child: const Center(
+            child: Icon(Icons.bolt, color: Colors.black, size: 24),
           ),
         ),
       ),

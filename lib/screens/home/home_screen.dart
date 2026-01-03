@@ -23,7 +23,7 @@ class HomeScreen extends StatelessWidget {
           children: [
             const Gap(48),
             const Text(
-              '境界（きょうかい）を編め',
+              '塗り潰せ',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
             ),

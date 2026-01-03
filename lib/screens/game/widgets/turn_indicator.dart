@@ -16,20 +16,16 @@ class TurnIndicator extends StatelessWidget {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Text(
-            'Turn: ',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
           Text(
             currentPlayer.displayName,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: currentPlayer == PlayerColor.white
-                      ? Colors.black
-                      : Colors.white,
-                ),
+              fontWeight: FontWeight.bold,
+              color: currentPlayer.darkColor,
+            ),
           ),
+          Text(' の番です ', style: Theme.of(context).textTheme.titleSmall),
         ],
       ),
     );

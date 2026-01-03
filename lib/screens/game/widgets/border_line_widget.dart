@@ -34,8 +34,8 @@ class BorderLineWidget extends StatelessWidget {
 
   Color _borderColor(PlayerColor owner) {
     return switch (owner) {
-      PlayerColor.white => Colors.blueGrey,
-      PlayerColor.black => Colors.brown,
+      PlayerColor.blue => Colors.blueGrey,
+      PlayerColor.red => Colors.brown,
     };
   }
 }

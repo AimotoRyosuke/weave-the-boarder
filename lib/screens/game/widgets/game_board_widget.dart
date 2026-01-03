@@ -4,8 +4,11 @@ import 'package:weave_the_border/core/constants/game_constants.dart';
 import 'package:weave_the_border/models/game/border_edge.dart';
 import 'package:weave_the_border/models/game/game_state.dart';
 import 'package:weave_the_border/models/game/position.dart';
+import 'package:weave_the_border/models/game/action_type.dart';
 import 'package:weave_the_border/providers/game/game_controller_provider.dart';
+import 'package:weave_the_border/providers/game/action_provider.dart';
 import 'package:weave_the_border/services/game/game_rule_service.dart';
+import 'package:weave_the_border/services/game/border_helper.dart';
 
 import 'board_cell_widget.dart';
 import 'borders_painter.dart';
@@ -20,143 +23,386 @@ class GameBoardWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     const ruleService = GameRuleService();
+    final currentAction = ref.watch(actionProvider);
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final boardSize = constraints.maxWidth;
         final cellSize = boardSize / GameConstants.boardSize;
-        const tapAreaWidth = 10.0; // Width of the tappable area for borders
 
-        return Stack(
-          children: [
-            // Grid of cells
-            GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: GameConstants.boardSize,
-              ),
-              itemCount: GameConstants.boardSize * GameConstants.boardSize,
-              itemBuilder: (context, index) {
-                final position = gameState.board.positionFromIndex(index);
-                final cell = gameState.board.cellAt(position);
-                final isMovable = ruleService.canMove(gameState, position);
-
-                return BoardCellWidget(
-                  cell: cell,
-                  isMovable: isMovable,
-                  onTapDown: (details) {
-                    final dxInCell = details.localPosition.dx;
-                    final dyInCell = details.localPosition.dy;
-
-                    bool actionTaken = false;
-                    if (dxInCell < tapAreaWidth) {
-                      if (ruleService.canPlaceBorder(
-                        gameState,
-                        position,
-                        BorderOrientation.left,
-                      )) {
-                        ref
-                            .read(gameControllerProvider.notifier)
-                            .placeBorder(position, BorderOrientation.left);
-                        actionTaken = true;
-                      }
-                    } else if (dxInCell > cellSize - tapAreaWidth) {
-                      if (ruleService.canPlaceBorder(
-                        gameState,
-                        position,
-                        BorderOrientation.right,
-                      )) {
-                        ref
-                            .read(gameControllerProvider.notifier)
-                            .placeBorder(position, BorderOrientation.right);
-                        actionTaken = true;
-                      }
-                    }
-
-                    if (!actionTaken && dyInCell < tapAreaWidth) {
-                      if (ruleService.canPlaceBorder(
-                        gameState,
-                        position,
-                        BorderOrientation.top,
-                      )) {
-                        ref
-                            .read(gameControllerProvider.notifier)
-                            .placeBorder(position, BorderOrientation.top);
-                        actionTaken = true;
-                      }
-                    } else if (!actionTaken &&
-                        dyInCell > cellSize - tapAreaWidth) {
-                      if (ruleService.canPlaceBorder(
-                        gameState,
-                        position,
-                        BorderOrientation.bottom,
-                      )) {
-                        ref
-                            .read(gameControllerProvider.notifier)
-                            .placeBorder(position, BorderOrientation.bottom);
-                        actionTaken = true;
-                      }
-                    }
-
-                    if (!actionTaken) {
-                      if (ruleService.canMove(gameState, position)) {
-                        ref
-                            .read(gameControllerProvider.notifier)
-                            .movePiece(position);
-                      }
-                    }
-                  },
-                );
-              },
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-            ),
-
-            // Borders
-            IgnorePointer(
-              child: CustomPaint(
-                size: Size(boardSize, boardSize),
-                painter: BordersPainter(
-                  gameState: gameState,
-                  cellSize: cellSize,
-                  ruleService: ruleService,
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onPanStart: (details) => _handlePanStart(details, cellSize, ref),
+          onPanUpdate: (details) => _handlePanUpdate(details, cellSize, ref),
+          onPanEnd: (details) =>
+              _handlePanEnd(details, cellSize, ref, ruleService),
+          onTapDown: (details) =>
+              _handleTapDown(details, cellSize, ref, ruleService),
+          onTapUp: (details) => _handleTapUp(details, cellSize, ref),
+          child: Stack(
+            children: [
+              // Grid of cells
+              GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: GameConstants.boardSize,
                 ),
-              ),
-            ),
+                itemCount: GameConstants.boardSize * GameConstants.boardSize,
+                itemBuilder: (context, index) {
+                  final position = gameState.board.positionFromIndex(index);
+                  final cell = gameState.board.cellAt(position);
 
-            // Player pieces
-            ...gameState.players.map((player) {
-              return _buildPositioned(
-                position: player.piecePosition,
-                cellSize: cellSize,
-                child: IgnorePointer(
-                  child: PlayerPieceWidget(
-                    key: ValueKey(player.color), // Add key for testing
-                    player: player,
+                  return BoardCellWidget(cell: cell);
+                },
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+              ),
+
+              // Walls (Borders)
+              IgnorePointer(
+                child: CustomPaint(
+                  size: Size(boardSize, boardSize),
+                  painter: BordersPainter(
+                    gameState: gameState,
+                    cellSize: cellSize,
+                    ruleService: ruleService,
+                    actionType: currentAction.type,
+                    selectedEdges: currentAction.selectedEdges,
+                    pendingEdges: currentAction.pendingEdges,
                   ),
                 ),
-              );
-            }),
+              ),
 
-            // Energy tokens
-            ...gameState.board.energyStacks.map((stack) {
-              if (!stack.hasTokens) return const SizedBox.shrink();
-              return _buildPositioned(
-                position: stack.position,
-                cellSize: cellSize,
-                child: EnergyTokenWidget(
-                  stack: stack,
-                  onTap: () {
-                    ref
-                        .read(gameControllerProvider.notifier)
-                        .collectEnergy(stack.position);
-                  },
-                ),
-              );
-            }),
-          ],
+              // Player pieces
+              ...gameState.players.map((player) {
+                return _buildPositioned(
+                  position: player.piecePosition,
+                  cellSize: cellSize,
+                  child: IgnorePointer(
+                    child: PlayerPieceWidget(
+                      key: ValueKey(player.color),
+                      player: player,
+                    ),
+                  ),
+                );
+              }),
+
+              // Energy tokens
+              ...gameState.board.energyStacks.map((stack) {
+                if (!stack.hasTokens) return const SizedBox.shrink();
+                return _buildPositioned(
+                  position: stack.position,
+                  cellSize: cellSize,
+                  child: IgnorePointer(child: EnergyTokenWidget(stack: stack)),
+                );
+              }),
+
+              // Movable & Pending hints (Consolidated top layer)
+              ...List.generate(
+                GameConstants.boardSize * GameConstants.boardSize,
+                (index) {
+                  final pos = gameState.board.positionFromIndex(index);
+                  final isMovable = switch (currentAction.type) {
+                    ActionType.move => ruleService.canMove(gameState, pos),
+                    ActionType.doubleMove => ruleService.canUseDoubleMove(
+                      gameState,
+                      pos,
+                    ),
+                    _ => false,
+                  };
+
+                  final isPending = currentAction.pendingPosition == pos;
+
+                  if (!isMovable && !isPending) return const SizedBox.shrink();
+
+                  return _buildPositioned(
+                    position: pos,
+                    cellSize: cellSize,
+                    child: IgnorePointer(
+                      child: Center(
+                        child: Container(
+                          width: cellSize * 0.8,
+                          height: cellSize * 0.8,
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(
+                              alpha: isPending ? 0.3 : 0.1,
+                            ),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
         );
       },
     );
+  }
+
+  void _handlePanStart(
+    DragStartDetails details,
+    double cellSize,
+    WidgetRef ref,
+  ) {
+    final pos = details.localPosition;
+    final state = ref.read(actionProvider);
+    final type = state.type;
+
+    if (type == ActionType.move || type == ActionType.doubleMove) {
+      _updateMovementTarget(pos, cellSize, ref);
+      return;
+    }
+
+    final edge = _getEdgeAt(pos.dx, pos.dy, cellSize);
+    if (edge == null) return;
+
+    if (type == ActionType.placeShortWall ||
+        type == ActionType.placeLongWall ||
+        (type == ActionType.relocateWall && state.selectedEdges.isNotEmpty)) {
+      ref.read(actionProvider.notifier).setPendingEdges([edge]);
+    }
+  }
+
+  void _handlePanUpdate(
+    DragUpdateDetails details,
+    double cellSize,
+    WidgetRef ref,
+  ) {
+    final state = ref.read(actionProvider);
+    final type = state.type;
+    final pos = details.localPosition;
+
+    if (type == ActionType.move || type == ActionType.doubleMove) {
+      _updateMovementTarget(pos, cellSize, ref);
+      return;
+    }
+
+    if (type != ActionType.placeShortWall &&
+        type != ActionType.placeLongWall &&
+        type != ActionType.relocateWall) {
+      return;
+    }
+
+    final pending = state.pendingEdges;
+    final currentEdge = _getEdgeAt(pos.dx, pos.dy, cellSize);
+
+    if (currentEdge == null) {
+      if (pending.isNotEmpty) {
+        ref.read(actionProvider.notifier).setPendingEdges([]);
+      }
+      return;
+    }
+
+    if (pending.isEmpty) {
+      ref.read(actionProvider.notifier).setPendingEdges([currentEdge]);
+      return;
+    }
+
+    final bool isLong =
+        type == ActionType.placeLongWall ||
+        (type == ActionType.relocateWall && state.selectedEdges.length == 2);
+
+    if (isLong) {
+      if (currentEdge == pending.first) return;
+      final first = pending.first;
+      if (currentEdge.orientation == first.orientation) {
+        final diffRow = (currentEdge.anchor.row - first.anchor.row).abs();
+        final diffCol = (currentEdge.anchor.col - first.anchor.col).abs();
+        bool isAdjacent =
+            (first.orientation == BorderOrientation.top ||
+                first.orientation == BorderOrientation.bottom)
+            ? (diffRow == 0 && diffCol == 1)
+            : (diffRow == 1 && diffCol == 0);
+
+        if (isAdjacent) {
+          ref.read(actionProvider.notifier).setPendingEdges([
+            first,
+            currentEdge,
+          ]);
+        }
+      }
+    } else {
+      if (currentEdge != pending.first) {
+        ref.read(actionProvider.notifier).setPendingEdges([currentEdge]);
+      }
+    }
+  }
+
+  void _handlePanEnd(
+    DragEndDetails details,
+    double cellSize,
+    WidgetRef ref,
+    GameRuleService ruleService,
+  ) {
+    _completePendingAction(ref, ruleService);
+  }
+
+  void _handleTapDown(
+    TapDownDetails details,
+    double cellSize,
+    WidgetRef ref,
+    GameRuleService ruleService,
+  ) {
+    final pos = details.localPosition;
+    final state = ref.read(actionProvider);
+    final type = state.type;
+
+    if (type == ActionType.relocateWall) {
+      final edge = _getEdgeAt(pos.dx, pos.dy, cellSize);
+      if (edge == null) return;
+
+      if (state.selectedEdges.isEmpty) {
+        final existing = BorderHelper.findEdgeBetween(
+          edge.anchor,
+          BorderHelper.getNeighbor(edge.anchor, edge.orientation),
+          gameState.board.borders,
+        );
+        if (existing != null &&
+            existing.owner == gameState.activePlayer.color) {
+          final group = existing.groupId != null
+              ? gameState.board.borders
+                    .where((b) => b.groupId == existing.groupId)
+                    .toList()
+              : [existing];
+          ref.read(actionProvider.notifier).selectEdges(group);
+        }
+      } else {
+        ref.read(actionProvider.notifier).setPendingEdges([edge]);
+      }
+      return;
+    }
+
+    if (type == ActionType.move || type == ActionType.doubleMove) {
+      _updateMovementTarget(pos, cellSize, ref);
+    } else if (type == ActionType.placeShortWall ||
+        type == ActionType.placeLongWall) {
+      final edge = _getEdgeAt(pos.dx, pos.dy, cellSize);
+      if (edge != null) {
+        ref.read(actionProvider.notifier).setPendingEdges([edge]);
+      }
+    }
+  }
+
+  void _handleTapUp(TapUpDetails details, double cellSize, WidgetRef ref) {
+    const ruleService = GameRuleService();
+    _completePendingAction(ref, ruleService);
+  }
+
+  void _updateMovementTarget(Offset pos, double cellSize, WidgetRef ref) {
+    final col = (pos.dx / cellSize).floor();
+    final row = (pos.dy / cellSize).floor();
+    final currentPos = Position(row: row, col: col);
+    final type = ref.read(actionProvider).type;
+
+    Position? targetPos;
+    if (currentPos.isOnBoard) {
+      const ruleService = GameRuleService();
+      final isValid = (type == ActionType.move)
+          ? ruleService.canMove(gameState, currentPos)
+          : ruleService.canUseDoubleMove(gameState, currentPos);
+      targetPos = isValid ? currentPos : Position.none;
+    } else {
+      targetPos = Position.none;
+    }
+
+    if (ref.read(actionProvider).pendingPosition != targetPos) {
+      ref.read(actionProvider.notifier).setPendingPosition(targetPos);
+    }
+  }
+
+  void _completePendingAction(WidgetRef ref, GameRuleService ruleService) {
+    final state = ref.read(actionProvider);
+
+    if (state.pendingPosition != null) {
+      if (state.pendingPosition != Position.none) {
+        if (state.type == ActionType.move) {
+          ref
+              .read(gameControllerProvider.notifier)
+              .movePiece(state.pendingPosition!);
+        } else if (state.type == ActionType.doubleMove) {
+          ref
+              .read(gameControllerProvider.notifier)
+              .useDoubleMove(state.pendingPosition!);
+        }
+      }
+      ref.read(actionProvider.notifier).setPendingPosition(null);
+      return;
+    }
+
+    final pending = state.pendingEdges;
+    if (pending.isNotEmpty) {
+      if (state.type == ActionType.placeShortWall) {
+        final edge = pending.first;
+        if (ruleService.canPlaceWall(
+          gameState,
+          edge.anchor,
+          edge.orientation,
+        )) {
+          ref
+              .read(gameControllerProvider.notifier)
+              .placeWall(edge.anchor, edge.orientation);
+          ref.read(actionProvider.notifier).reset();
+        }
+      } else if (state.type == ActionType.placeLongWall) {
+        if (pending.length == 2 &&
+            ruleService.canPlaceLongWall(gameState, pending)) {
+          ref.read(gameControllerProvider.notifier).placeLongWall(pending);
+          ref.read(actionProvider.notifier).reset();
+        }
+      } else if (state.type == ActionType.relocateWall &&
+          state.selectedEdges.isNotEmpty) {
+        if (pending.length == state.selectedEdges.length &&
+            ruleService.canRelocateWalls(
+              gameState,
+              state.selectedEdges,
+              pending,
+            )) {
+          ref
+              .read(gameControllerProvider.notifier)
+              .relocateWalls(state.selectedEdges, pending);
+          ref.read(actionProvider.notifier).reset();
+        }
+      }
+      ref.read(actionProvider.notifier).setPendingEdges([]);
+    }
+  }
+
+  BorderEdge? _getEdgeAt(double x, double y, double cellSize) {
+    final col = (x / cellSize).floor();
+    final row = (y / cellSize).floor();
+    if (row < 0 ||
+        row >= GameConstants.boardSize ||
+        col < 0 ||
+        col >= GameConstants.boardSize) {
+      return null;
+    }
+    final dx = x - col * cellSize;
+    final dy = y - row * cellSize;
+    final orientation = _getClosestOrientation(dx, dy, cellSize);
+    if (orientation == null) return null;
+    return BorderEdge(
+      anchor: Position(row: row, col: col),
+      orientation: orientation,
+      owner: gameState.activePlayer.color,
+    );
+  }
+
+  BorderOrientation? _getClosestOrientation(
+    double dx,
+    double dy,
+    double cellSize,
+  ) {
+    final dists = {
+      BorderOrientation.left: dx,
+      BorderOrientation.right: cellSize - dx,
+      BorderOrientation.top: dy,
+      BorderOrientation.bottom: cellSize - dy,
+    };
+    final closest = dists.entries.reduce((a, b) => a.value < b.value ? a : b);
+    if (closest.value > cellSize * 0.3) return null;
+    return closest.key;
   }
 
   Widget _buildPositioned({
