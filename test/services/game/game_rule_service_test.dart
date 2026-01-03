@@ -175,6 +175,18 @@ void main() {
           equals(4),
         );
       });
+
+      test('ターン終了時にターンカウントが増加する', () {
+        final initial = GameState.initial();
+        final afterTurn = service.endTurn(initial);
+        expect(afterTurn.turnCount, equals(initial.turnCount + 1));
+      });
+
+      test('ターン終了時に現在のターンが切り替わる', () {
+        final initial = GameState.initial();
+        final afterTurn = service.endTurn(initial);
+        expect(afterTurn.currentTurn, equals(initial.currentTurn.opponent));
+      });
     });
   });
 }

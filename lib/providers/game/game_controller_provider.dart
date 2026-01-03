@@ -35,8 +35,6 @@ class GameController extends _$GameController {
   void fortifyArea(Set<Position> area) =>
       state = _ruleService.fortifyArea(state, area);
 
-  void passTurn() => state = _ruleService.passTurn(state);
-
   void endTurn() => state = _ruleService.endTurn(state);
 
   Map<PlayerColor, ScoreDetail> currentScore() => _ruleService.score(state);

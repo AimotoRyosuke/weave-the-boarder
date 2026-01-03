@@ -277,8 +277,6 @@ class GameRuleService {
     return afterCost;
   }
 
-  GameState passTurn(GameState state) => endTurn(state);
-
   GameState endTurn(GameState state) {
     final nextTurn = state.currentTurn.opponent;
     final refreshedBoard = _refillCenterEnergy(state.board);
