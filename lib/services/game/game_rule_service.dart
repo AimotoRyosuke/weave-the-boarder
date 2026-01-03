@@ -323,12 +323,17 @@ class GameRuleService {
   Board _refillCenterEnergy(Board board) {
     final centerIndex = GameConstants.boardSize ~/ 2;
     final centerPosition = Position(row: centerIndex, col: centerIndex);
-    final updatedStack = EnergyTokenStack(
-      position: centerPosition,
-      count: GameConstants.initialCenterEnergy,
-    );
-    final stacks = _replaceEnergyStack(board.energyStacks, updatedStack);
-    return board.copyWith(energyStacks: stacks);
+    final currentCount = board.stackAt(centerPosition).count;
+
+    if (currentCount < GameConstants.initialCenterEnergy) {
+      final updatedStack = EnergyTokenStack(
+        position: centerPosition,
+        count: GameConstants.initialCenterEnergy,
+      );
+      final stacks = _replaceEnergyStack(board.energyStacks, updatedStack);
+      return board.copyWith(energyStacks: stacks);
+    }
+    return board;
   }
 
   bool _adjacentToControlledCell(

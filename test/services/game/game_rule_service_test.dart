@@ -125,5 +125,56 @@ void main() {
       expect(fortified.board.borders.every((edge) => edge.isFortified), isTrue);
       expect(fortified.activePlayer.energy, equals(0));
     });
+
+    group('ターン終了時のエネルギー補充', () {
+      final centerPosition = Position(
+        row: GameConstants.boardSize ~/ 2,
+        col: GameConstants.boardSize ~/ 2,
+      );
+
+      test('中央マスにエネルギートークンが3個未満なら3個になるまで補充される', () {
+        final initial = GameState.initial();
+        // 1つ取得して2個にする
+        final stateWithTwoTokens = service.collectEnergy(initial, centerPosition);
+
+        final afterTurn = service.endTurn(stateWithTwoTokens);
+
+        expect(
+          afterTurn.board.stackAt(centerPosition).count,
+          equals(GameConstants.initialCenterEnergy),
+        );
+      });
+
+      test('中央マスにエネルギートークンが既に3個なら補充されない', () {
+        final initial = GameState.initial(); // 最初から3個
+
+        final afterTurn = service.endTurn(initial);
+
+        expect(
+          afterTurn.board.stackAt(centerPosition).count,
+          equals(GameConstants.initialCenterEnergy),
+        );
+      });
+
+      test('中央マスにエネルギートークンが3個より多い場合でも減らされない (潜在的バグ防止)', () {
+        final initial = GameState.initial();
+        final boardWithFourTokens = initial.board.copyWith(
+          energyStacks: initial.board.energyStacks.map((stack) {
+            if (stack.position == centerPosition) {
+              return stack.copyWith(count: 4); // 仮に4個ある状態
+            }
+            return stack;
+          }).toList(),
+        );
+        final stateWithFourTokens = initial.copyWith(board: boardWithFourTokens);
+
+        final afterTurn = service.endTurn(stateWithFourTokens);
+
+        expect(
+          afterTurn.board.stackAt(centerPosition).count,
+          equals(4),
+        );
+      });
+    });
   });
 }
