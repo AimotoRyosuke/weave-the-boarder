@@ -7,7 +7,7 @@
 - enumには `@JsonEnum` を付けないでください。
 - モデルクラスのフィールドにfreezedのクラスが入る時はそのfactoryに`@JsonSerializable(explicitToJson: true)`を付けてください。
 - enumのextentionは作らず、enumにgetterや関数を作成するようにしてください。
-- コード内のコメントは日本語で記載してくささい。
+- コード内のコメントは日本語で記載してください。
 
 ## テスト
 
