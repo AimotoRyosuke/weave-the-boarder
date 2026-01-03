@@ -65,4 +65,12 @@ sealed class Board with _$Board {
   }
 
   bool hasEnergyAt(Position position) => stackAt(position).hasTokens;
+
+  Position positionFromIndex(int index) {
+    final size = GameConstants.boardSize;
+    if (index < 0 || index >= size * size) {
+      throw RangeError('Invalid index: $index');
+    }
+    return Position(row: index ~/ size, col: index % size);
+  }
 }
