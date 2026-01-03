@@ -17,24 +17,30 @@ sealed class GameState with _$GameState {
     required List<Player> players,
     required PlayerColor currentTurn,
     @Default(0) int turnCount,
+    @Default(GameConstants.actionsPerTurn) int actionsRemaining,
   }) = _GameState;
 
   static GameState initial() {
     final board = Board.initial();
-    final size = GameConstants.boardSize;
-    final startPositions = {
-      PlayerColor.white: const Position(row: 0, col: 0),
-      PlayerColor.black: Position(row: size - 1, col: size - 1),
-    };
 
-    final players = startPositions.entries.map((entry) {
-      return Player(color: entry.key, piecePosition: entry.value);
-    }).toList();
+    final players = [
+      const Player(
+        color: PlayerColor.blue,
+        piecePosition: Position(row: 6, col: 3),
+        energy: 0,
+      ),
+      const Player(
+        color: PlayerColor.red,
+        piecePosition: Position(row: 0, col: 3),
+        energy: 0, // Both players start with 0 energy
+      ),
+    ];
 
     return GameState(
       board: board,
       players: players,
-      currentTurn: PlayerColor.white,
+      currentTurn: PlayerColor.blue,
+      actionsRemaining: GameConstants.actionsPerTurn,
     );
   }
 

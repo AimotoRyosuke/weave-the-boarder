@@ -8,7 +8,7 @@ void main() {
     test('所有者の有無によって制御されているか判定', () {
       final controlled = Cell(
         position: Position(row: 1, col: 1),
-        owner: PlayerColor.black,
+        owner: PlayerColor.red,
       );
       final neutral = Cell(position: Position(row: 1, col: 2));
 

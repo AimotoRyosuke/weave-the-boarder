@@ -1,16 +1,15 @@
-# Weave the Border - アーキテクチャ設計書
+# 塗り潰せ - アーキテクチャ設計書
 
 ## 概要
 
-Flutter + Riverpod + Firebase Realtime Databaseを使用した2人対戦ボードゲーム
+Flutter + Riverpod + Firebase Realtime Databaseを使用した、7×7盤面の2人対戦陣取りボードゲーム。
 
-## 対戦方式
+## ゲームルール（サマリー）
 
-- **ローカル対戦**: 同一デバイスで2人プレイ
-- **オンライン対戦**: ホスト/ゲスト方式
-  - ホストが部屋を作成 → 6桁の部屋番号を生成
-  - ゲストが部屋番号を入力して入室
-  - リアルタイムで盤面を同期
+- **勝利条件**: 先に15マスを自分の色で塗り潰したプレイヤーの勝利。
+- **ターン**: 1ターン1アクション制。アクション完了後、自動で手番が交代。
+- **アクション**: 移動（通常/2マス）、壁の設置（1マス/2マス）、壁の再配置。
+- **エナジー**: 盤面上のエナジーマスに止まることで獲得。特殊アクションの消費に使用。
 
 ---
 
@@ -18,35 +17,12 @@ Flutter + Riverpod + Firebase Realtime Databaseを使用した2人対戦ボー�
 
 ### dependencies
 
-| パッケージ            | 役割                                                               |
-| --------------------- | ------------------------------------------------------------------ |
-| `flutter`             | UI フレームワーク本体（Flutter SDK）。                             |
-| `hooks_riverpod`      | Riverpod ベースの状態管理（Hooks 版）。                            |
-| `flutter_hooks`       | フック API を Flutter コンポーネントで使うため。                   |
-| `riverpod_annotation` | Riverpod/generated 保守用のアノテーション。                        |
-| `freezed_annotation`  | イミュータブルモデル定義のコード生成に使用。                       |
-| `json_annotation`     | モデルの JSON シリアライズ用アノテーション。                       |
-| `firebase_core`       | Firebase 初期化と共通設定。                                        |
-| `firebase_database`   | オンライン対戦のリアルタイム同期。                                 |
-| `firebase_auth`       | 匿名認証などのユーザ識別。                                         |
-| `shared_preferences`  | ローカル設定・状態の永続化。                                       |
-| `animations`          | UI アニメーション強化（遷移など）。                                |
-| `uuid`                | 一意な文字列（部屋コードやトークン）の生成。                       |
-| `cupertino_icons`     | iOS 風アイコンセット。                                             |
-| `gap`                 | 縦方向の隙間を簡潔に表現するユーティリティ（`Gap` ウィジェット）。 |
-
-### dev_dependencies
-
-| パッケージ           | 役割                                          |
-| -------------------- | --------------------------------------------- |
-| `flutter_test`       | Flutter 固有のテストフレームワーク。          |
-| `build_runner`       | コード生成タスクの起動ランナー。              |
-| `freezed`            | `freezed_annotation` からモデルコードを生成。 |
-| `json_serializable`  | JSON シリアライズコード生成。                 |
-| `riverpod_generator` | Riverpod プロバイダのコード生成。             |
-| `flutter_lints`      | Flutter 標準の lint ルール。                  |
-| `riverpod_lint`      | Riverpod 専用の lint ルール設定。             |
-| `custom_lint`        | 任意の lint ルールを組み合わせる仕組み。      |
+| パッケージ           | 役割                                                   |
+| -------------------- | ------------------------------------------------------ |
+| `hooks_riverpod`     | 状態管理の核。NotifierProviderによるゲーム状態の管理。 |
+| `freezed_annotation` | イミュータブルなGameState、Player、Boardモデルの定義。 |
+| `firebase_database`  | オンライン対戦におけるGameStateのリアルタイム同期。    |
+| `firebase_auth`      | 匿名認証によるプレイヤー識別。                         |
 
 ---
 
@@ -54,135 +30,70 @@ Flutter + Riverpod + Firebase Realtime Databaseを使用した2人対戦ボー�
 
 ```text
 lib/
-├── main.dart
-│
 ├── core/
 │   ├── constants/
-│   │   ├── game_constants.dart       # ゲーム定数（ボードサイズ、トークン数等）
-│   │   ├── firebase_paths.dart       # Firebaseパス定義
-│   │   └── app_theme.dart            # アプリテーマ
-│   ├── extensions/
-│   │   └── position_extension.dart   # Position拡張メソッド
-│   └── utils/
-│       ├── room_code_generator.dart  # 部屋番号生成
-│       └── validators.dart           # バリデーション
+│   │   ├── game_constants.dart       # ボードサイズ(7)、勝利数(15)、初期エナジー等
+│   │   └── app_theme.dart            # パステルカラーを基調としたチームカラー
+│   └── exceptions/
+│       └── invalid_action_exception.dart # ルール違反時の例外
 │
 ├── models/
 │   ├── game/
-│   │   ├── game_state.dart           # ゲーム状態全体
-│   │   ├── game_state.freezed.dart
-│   │   ├── game_state.g.dart
-│   │   ├── board.dart                # 5x5ボード
-│   │   ├── cell.dart                 # 個別セル
-│   │   ├── player.dart               # プレイヤー
-│   │   ├── position.dart             # 座標
-│   │   ├── border_edge.dart          # 境界の辺
-│   │   └── action_type.dart          # アクション種別
-│   │
-│   ├── online/
-│   │   ├── room.dart                 # オンライン部屋情報
-│   │   ├── room.freezed.dart
-│   │   ├── room.g.dart
-│   │   ├── room_status.dart          # 部屋状態（待機中/進行中/終了）
-│   │   └── player_role.dart          # ホスト/ゲスト
-│   │
-│   └── local/
-│       └── game_settings.dart        # ローカル設定
+│   │   ├── game_state.dart           # actionsRemaining, currentTurn等を含む全体状態
+│   │   ├── board.dart                # 7x7セルの管理、エナジー配置ロジック
+│   │   ├── cell.dart                 # 所有者（PlayerColor）の情報
+│   │   ├── player.dart               # 座標、残り壁数、所持エナジー
+│   │   ├── player_color.dart         # blue(青) / red(赤) の定義とパステルカラー値
+│   │   ├── border_edge.dart          # 壁の定義。groupIdによる2マス壁の連結管理
+│   │   ├── position.dart             # 座標(row, col)。無効値(none)の定義
+│   │   └── action_type.dart          # 移動、壁設置、再配置等の列挙型
+│   └── ...
 │
 ├── providers/
 │   ├── game/
-│   │   ├── game_state_provider.dart           # ゲーム状態管理
-│   │   ├── game_state_provider.g.dart
-│   │   ├── game_logic_provider.dart           # ゲームロジック
-│   │   └── action_validator_provider.dart     # アクション検証
-│   │
-│   ├── online/
-│   │   ├── firebase_provider.dart             # Firebase初期化
-│   │   ├── room_provider.dart                 # 部屋管理
-│   │   ├── room_provider.g.dart
-│   │   ├── room_sync_provider.dart            # リアルタイム同期
-│   │   └── connection_provider.dart           # 接続状態監視
-│   │
-│   └── local/
-│       └── settings_provider.dart             # ローカル設定
+│   │   ├── game_controller_provider.dart  # ゲームの主状態（GameState）を管理
+│   │   ├── action_provider.dart           # UI上の操作状態（選択中の壁、ドラッグ中のプレビュー等）
+│   │   └── action_validator_provider.dart # 操作がルール上有効かの検証
+│   └── ...
 │
 ├── services/
 │   ├── game/
-│   │   ├── game_rule_service.dart             # ルール判定
-│   │   ├── score_calculator.dart              # スコア計算
-│   │   └── area_detector.dart                 # エリア検出
-│   │
-│   ├── online/
-│   │   ├── firebase_room_service.dart         # Firebase部屋操作
-│   │   ├── room_code_service.dart             # 部屋番号管理
-│   │   └── sync_service.dart                  # 同期サービス
-│   │
-│   └── local/
-│       └── storage_service.dart               # SharedPreferences操作
+│   │   ├── game_rule_service.dart         # 移動・壁設置・再配置の根幹ロジック
+│   │   ├── area_detector.dart             # 連結エリア検出、分断禁止チェック(BFS)
+│   │   └── score_calculator.dart          # 獲得マス数の集計、勝利判定
+│   └── ...
 │
 ├── screens/
-│   ├── home/
-│   │   ├── home_screen.dart                   # ホーム画面
-│   │   └── widgets/
-│   │       ├── mode_selector.dart             # モード選択
-│   │       └── title_widget.dart
-│   │
-│   ├── room/
-│   │   ├── create_room_screen.dart            # 部屋作成画面
-│   │   ├── join_room_screen.dart              # 部屋参加画面
-│   │   ├── waiting_room_screen.dart           # 待機画面
-│   │   └── widgets/
-│   │       ├── room_code_display.dart         # 部屋番号表示
-│   │       └── room_code_input.dart           # 部屋番号入力
-│   │
-│   ├── game/
-│   │   ├── game_screen.dart                   # ゲーム画面
-│   │   └── widgets/
-│   │       ├── game_board_widget.dart         # ボード全体
-│   │       ├── board_cell_widget.dart         # セル
-│   │       ├── border_line_widget.dart        # 境界線
-│   │       ├── player_piece_widget.dart       # コマ
-│   │       ├── energy_panel.dart              # エネルギーパネル
-│   │       ├── action_panel.dart              # アクション選択
-│   │       ├── turn_indicator.dart            # ターン表示
-│   │       └── game_info_panel.dart           # ゲーム情報
-│   │
-│   └── result/
-│       ├── result_screen.dart                 # 結果画面
+│   └── game/
+│       ├── game_screen.dart               # 勝利判定・リザルト表示・全体レイアウト
 │       └── widgets/
-│           ├── score_breakdown.dart           # スコア詳細
-│           └── winner_display.dart            # 勝者表示
-│
-└── widgets/
-    ├── common/
-    │   ├── loading_overlay.dart               # ローディング
-    │   ├── error_dialog.dart                  # エラーダイアログ
-    │   └── custom_button.dart                 # カスタムボタン
-    │
-    └── animations/
-        ├── piece_move_animation.dart          # コマ移動
-        └── border_place_animation.dart        # 境界設置
+│           ├── game_board_widget.dart     # ジェスチャー（タップ・ドラッグ）のハンドル
+│           ├── board_cell_widget.dart     # セルの描画
+│           ├── borders_painter.dart       # 壁（CustomPaint）および「×」印の描画
+│           ├── action_selector.dart       # アクション切り替え（移動/1マス壁/2マス壁...）
+│           ├── player_status_widget.dart  # スコア、エナジー、残り壁数の表示
+│           └── turn_indicator.dart        # 現在の手番表示
+└── ...
 ```
 
 ---
 
-## データフロー
+## 重要アルゴリズムとデータフロー
 
-### ローカル対戦
+### 1. 壁の配置と分断禁止ルール
 
-```text
-User Action → GameControllerProvider → UI Update
-```
+- `AreaDetector.allCellsConnected` メソッドにて、壁を置いた後の仮想盤面に対してBFS（幅優先探索）を実行。
+- いずれかのマスへの到達可能性が失われる（全49マスが繋がらなくなる）配置は、UI上で「×」を表示し、実行をブロックする。
 
-### オンライン対戦
+### 2. 操作感（Aim & Release / Drag-to-Place）
 
-```text
-[ホスト側]
-User Action → GameControllerProvider → FirebaseRoomService → Firebase Database
+- **移動**: `onTapDown`でターゲットを予約（pending）、`onTapUp`または`onPanEnd`で実行。スライドして無効なマスに指を動かすとキャンセル（Position.noneセット）。
+- **壁**: `onPanUpdate`でなぞっている辺をリアルタイムに計算し、白いグロー効果でプレビューを表示。
 
-[ゲスト側]
-Firebase Database → RoomSyncProvider → GameControllerProvider → UI Update
-```
+### 3. 自動ターン切り替えと同期
+
+- `GameController` 内のアクションメソッド実行後、`actionsRemaining` が0になったタイミングで `endTurn()` を自動実行。
+- オンライン対戦時は、このタイミングでFirebaseのデータが更新され、相手側へ変更が伝播する。
 
 ---
 
@@ -192,104 +103,21 @@ Firebase Database → RoomSyncProvider → GameControllerProvider → UI Update
 {
   "rooms": {
     "{roomCode}": {
-      "code": "ABC123",
-      "status": "waiting | playing | finished",
-      "hostId": "user_xxx",
-      "guestId": "user_yyy",
-      "createdAt": 1234567890,
+      "status": "playing",
       "gameState": {
         "board": {
-          "cells": [...],
-          "borders": [...]
+          "cells": [{ "position": {"row":0, "col":3}, "owner": "red" }, ...],
+          "borders": [{ "anchor": {"row":1, "col":1}, "orientation": "top", "groupId": "unique_id" }]
         },
-        "players": {
-          "white": {...},
-          "black": {...}
-        },
-        "currentTurn": "white | black",
-        "energyTokens": [...],
-        "turnCount": 0
+        "players": [
+          { "color": "blue", "piecePosition": {"row":6, "col":3}, "energy": 0, "shortWalls": 5, "longWalls": 5 },
+          { "color": "red", "piecePosition": {"row":0, "col":3}, "energy": 0, "shortWalls": 5, "longWalls": 5 }
+        ],
+        "currentTurn": "blue",
+        "actionsRemaining": 1
       }
     }
   }
-}
-```
-
----
-
-## 主要機能実装方針
-
-### 1. 部屋作成フロー
-
-1. ホストが「オンライン対戦」→「部屋を作る」を選択
-2. `RoomCodeService`で6桁英数字コード生成
-3. `FirebaseRoomService`でFirebaseに部屋データ作成
-4. 待機画面で部屋番号を表示
-5. `RoomSyncProvider`でゲスト参加を監視
-
-### 2. 部屋参加フロー
-
-1. ゲストが「オンライン対戦」→「部屋に入る」を選択
-2. 6桁コードを入力
-3. `FirebaseRoomService`で部屋の存在確認
-4. 部屋が存在し、待機中なら参加
-5. ホスト側に通知、ゲーム開始
-
-### 3. ゲーム同期
-
-- ホストがアクション実行 → Firebase更新
-- `RoomSyncProvider`が変更を検知 → ゲストの画面更新
-- ターン制なので競合は発生しない
-- 切断時は`ConnectionProvider`で検知し、再接続処理
-
-### 4. ゲーム終了
-
-- 勝利条件達成時、Firebase上のステータスを`finished`に変更
-- 両者に結果画面表示
-- 一定時間後、部屋データを自動削除（Cloud Functions or クライアント側）
-
----
-
-## セキュリティルール（Firebase）
-
-```json
-{
-  "rules": {
-    "rooms": {
-      "$roomCode": {
-        ".read": true,
-        ".write": "!data.exists() || data.child('hostId').val() === auth.uid || data.child('guestId').val() === auth.uid"
-      }
-    }
-  }
-}
-```
-
----
-
-## 状態管理パターン（Riverpod）
-
-### NotifierProvider パターン
-
-```dart
-@riverpod
-class GameController extends _$GameController {
-  @override
-  GameState build() => GameState.initial();
-  
-  void executeAction(ActionType action) {
-    // ロジック実行
-    state = state.copyWith(...);
-  }
-}
-```
-
-### StreamProvider パターン（リアルタイム同期）
-
-```dart
-@riverpod
-Stream<Room?> roomStream(RoomStreamRef ref, String roomCode) {
-  return ref.watch(firebaseServiceProvider).watchRoom(roomCode);
 }
 ```
 
@@ -297,21 +125,8 @@ Stream<Room?> roomStream(RoomStreamRef ref, String roomCode) {
 
 ## テスト戦略
 
-- `test/models/`: モデルのシリアライズテスト
-- `test/services/game/`: ゲームロジックの単体テスト
-- `test/providers/`: プロバイダーの状態変化テスト
-- `integration_test/`: オンライン対戦フロー結合テスト
+- **GameRuleService**: 移動可能範囲、エナジー獲得、壁設置のバリデーション。
+- **AreaDetector**: BFSによるボード連結性チェックの正確性。
+- **ScoreCalculator**: 15マス到達時の勝利判定。
 
----
-
-## 今後の拡張性
-
-- リプレイ機能（ゲーム履歴保存）
-- フレンドリスト機能
-- ランキング機能
-- AIモード（オフライン対CPU）
-- カスタムボードサイズ
-
----
-
-作成日: 2026-01-02
+作成日: 2026-01-03（ルール改訂版）

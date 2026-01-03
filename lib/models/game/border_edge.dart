@@ -30,6 +30,7 @@ sealed class BorderEdge with _$BorderEdge {
     required BorderOrientation orientation,
     required PlayerColor owner,
     @Default(false) bool isFortified,
+    String? groupId,
   }) = _BorderEdge;
   factory BorderEdge.fromJson(Map<String, dynamic> json) =>
       _$BorderEdgeFromJson(json);

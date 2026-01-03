@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$BorderEdge {
 
- Position get anchor; BorderOrientation get orientation; PlayerColor get owner; bool get isFortified;
+ Position get anchor; BorderOrientation get orientation; PlayerColor get owner; bool get isFortified; String? get groupId;
 /// Create a copy of BorderEdge
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $BorderEdgeCopyWith<BorderEdge> get copyWith => _$BorderEdgeCopyWithImpl<BorderE
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BorderEdge&&(identical(other.anchor, anchor) || other.anchor == anchor)&&(identical(other.orientation, orientation) || other.orientation == orientation)&&(identical(other.owner, owner) || other.owner == owner)&&(identical(other.isFortified, isFortified) || other.isFortified == isFortified));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BorderEdge&&(identical(other.anchor, anchor) || other.anchor == anchor)&&(identical(other.orientation, orientation) || other.orientation == orientation)&&(identical(other.owner, owner) || other.owner == owner)&&(identical(other.isFortified, isFortified) || other.isFortified == isFortified)&&(identical(other.groupId, groupId) || other.groupId == groupId));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,anchor,orientation,owner,isFortified);
+int get hashCode => Object.hash(runtimeType,anchor,orientation,owner,isFortified,groupId);
 
 @override
 String toString() {
-  return 'BorderEdge(anchor: $anchor, orientation: $orientation, owner: $owner, isFortified: $isFortified)';
+  return 'BorderEdge(anchor: $anchor, orientation: $orientation, owner: $owner, isFortified: $isFortified, groupId: $groupId)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $BorderEdgeCopyWith<$Res>  {
   factory $BorderEdgeCopyWith(BorderEdge value, $Res Function(BorderEdge) _then) = _$BorderEdgeCopyWithImpl;
 @useResult
 $Res call({
- Position anchor, BorderOrientation orientation, PlayerColor owner, bool isFortified
+ Position anchor, BorderOrientation orientation, PlayerColor owner, bool isFortified, String? groupId
 });
 
 
@@ -65,13 +65,14 @@ class _$BorderEdgeCopyWithImpl<$Res>
 
 /// Create a copy of BorderEdge
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? anchor = null,Object? orientation = null,Object? owner = null,Object? isFortified = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? anchor = null,Object? orientation = null,Object? owner = null,Object? isFortified = null,Object? groupId = freezed,}) {
   return _then(_self.copyWith(
 anchor: null == anchor ? _self.anchor : anchor // ignore: cast_nullable_to_non_nullable
 as Position,orientation: null == orientation ? _self.orientation : orientation // ignore: cast_nullable_to_non_nullable
 as BorderOrientation,owner: null == owner ? _self.owner : owner // ignore: cast_nullable_to_non_nullable
 as PlayerColor,isFortified: null == isFortified ? _self.isFortified : isFortified // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,groupId: freezed == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 /// Create a copy of BorderEdge
@@ -162,10 +163,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Position anchor,  BorderOrientation orientation,  PlayerColor owner,  bool isFortified)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Position anchor,  BorderOrientation orientation,  PlayerColor owner,  bool isFortified,  String? groupId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _BorderEdge() when $default != null:
-return $default(_that.anchor,_that.orientation,_that.owner,_that.isFortified);case _:
+return $default(_that.anchor,_that.orientation,_that.owner,_that.isFortified,_that.groupId);case _:
   return orElse();
 
 }
@@ -183,10 +184,10 @@ return $default(_that.anchor,_that.orientation,_that.owner,_that.isFortified);ca
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Position anchor,  BorderOrientation orientation,  PlayerColor owner,  bool isFortified)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Position anchor,  BorderOrientation orientation,  PlayerColor owner,  bool isFortified,  String? groupId)  $default,) {final _that = this;
 switch (_that) {
 case _BorderEdge():
-return $default(_that.anchor,_that.orientation,_that.owner,_that.isFortified);}
+return $default(_that.anchor,_that.orientation,_that.owner,_that.isFortified,_that.groupId);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -200,10 +201,10 @@ return $default(_that.anchor,_that.orientation,_that.owner,_that.isFortified);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Position anchor,  BorderOrientation orientation,  PlayerColor owner,  bool isFortified)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Position anchor,  BorderOrientation orientation,  PlayerColor owner,  bool isFortified,  String? groupId)?  $default,) {final _that = this;
 switch (_that) {
 case _BorderEdge() when $default != null:
-return $default(_that.anchor,_that.orientation,_that.owner,_that.isFortified);case _:
+return $default(_that.anchor,_that.orientation,_that.owner,_that.isFortified,_that.groupId);case _:
   return null;
 
 }
@@ -215,13 +216,14 @@ return $default(_that.anchor,_that.orientation,_that.owner,_that.isFortified);ca
 
 @JsonSerializable(explicitToJson: true)
 class _BorderEdge extends BorderEdge {
-  const _BorderEdge({required this.anchor, required this.orientation, required this.owner, this.isFortified = false}): super._();
+  const _BorderEdge({required this.anchor, required this.orientation, required this.owner, this.isFortified = false, this.groupId}): super._();
   factory _BorderEdge.fromJson(Map<String, dynamic> json) => _$BorderEdgeFromJson(json);
 
 @override final  Position anchor;
 @override final  BorderOrientation orientation;
 @override final  PlayerColor owner;
 @override@JsonKey() final  bool isFortified;
+@override final  String? groupId;
 
 /// Create a copy of BorderEdge
 /// with the given fields replaced by the non-null parameter values.
@@ -236,16 +238,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BorderEdge&&(identical(other.anchor, anchor) || other.anchor == anchor)&&(identical(other.orientation, orientation) || other.orientation == orientation)&&(identical(other.owner, owner) || other.owner == owner)&&(identical(other.isFortified, isFortified) || other.isFortified == isFortified));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BorderEdge&&(identical(other.anchor, anchor) || other.anchor == anchor)&&(identical(other.orientation, orientation) || other.orientation == orientation)&&(identical(other.owner, owner) || other.owner == owner)&&(identical(other.isFortified, isFortified) || other.isFortified == isFortified)&&(identical(other.groupId, groupId) || other.groupId == groupId));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,anchor,orientation,owner,isFortified);
+int get hashCode => Object.hash(runtimeType,anchor,orientation,owner,isFortified,groupId);
 
 @override
 String toString() {
-  return 'BorderEdge(anchor: $anchor, orientation: $orientation, owner: $owner, isFortified: $isFortified)';
+  return 'BorderEdge(anchor: $anchor, orientation: $orientation, owner: $owner, isFortified: $isFortified, groupId: $groupId)';
 }
 
 
@@ -256,7 +258,7 @@ abstract mixin class _$BorderEdgeCopyWith<$Res> implements $BorderEdgeCopyWith<$
   factory _$BorderEdgeCopyWith(_BorderEdge value, $Res Function(_BorderEdge) _then) = __$BorderEdgeCopyWithImpl;
 @override @useResult
 $Res call({
- Position anchor, BorderOrientation orientation, PlayerColor owner, bool isFortified
+ Position anchor, BorderOrientation orientation, PlayerColor owner, bool isFortified, String? groupId
 });
 
 
@@ -273,13 +275,14 @@ class __$BorderEdgeCopyWithImpl<$Res>
 
 /// Create a copy of BorderEdge
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? anchor = null,Object? orientation = null,Object? owner = null,Object? isFortified = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? anchor = null,Object? orientation = null,Object? owner = null,Object? isFortified = null,Object? groupId = freezed,}) {
   return _then(_BorderEdge(
 anchor: null == anchor ? _self.anchor : anchor // ignore: cast_nullable_to_non_nullable
 as Position,orientation: null == orientation ? _self.orientation : orientation // ignore: cast_nullable_to_non_nullable
 as BorderOrientation,owner: null == owner ? _self.owner : owner // ignore: cast_nullable_to_non_nullable
 as PlayerColor,isFortified: null == isFortified ? _self.isFortified : isFortified // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,groupId: freezed == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

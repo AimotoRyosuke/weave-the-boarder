@@ -7,42 +7,32 @@ import 'package:weave_the_border/models/game/position.dart';
 void main() {
   group('Board', () {
     test('初期状態のボードを構築できる', () {
-      final board = Board.initial();
-      final center = Position(
-        row: GameConstants.boardSize ~/ 2,
-        col: GameConstants.boardSize ~/ 2,
-      );
+      final board = Board.initial(seed: 42);
 
       expect(
         board.cells,
         hasLength(GameConstants.boardSize * GameConstants.boardSize),
       );
-      expect(board.energyStacks, hasLength(1));
-      expect(board.hasEnergyAt(center), isTrue);
+      expect(board.energyStacks, hasLength(5));
       expect(
-        board.cellAt(Position(row: 0, col: 0)).owner,
-        equals(PlayerColor.white),
+        board.cellAt(const Position(row: 6, col: 3)).owner,
+        equals(PlayerColor.blue),
       );
       expect(
-        board
-            .cellAt(
-              Position(
-                row: GameConstants.boardSize - 1,
-                col: GameConstants.boardSize - 1,
-              ),
-            )
-            .owner,
-        equals(PlayerColor.black),
+        board.cellAt(const Position(row: 0, col: 3)).owner,
+        equals(PlayerColor.red),
       );
     });
 
     test('セルやスタックの取得と例外処理', () {
       final board = Board.initial();
-      final missingPosition = Position(row: -1, col: 0);
-      final emptyPosition = Position(row: 0, col: 1);
+      final missingPosition = const Position(row: -1, col: 0);
+      final emptyPosition = const Position(
+        row: 1,
+        col: 0,
+      ); // row 1 never has energy initially
 
       expect(() => board.cellAt(missingPosition), throwsRangeError);
-      expect(board.stackAt(emptyPosition).count, 0);
       expect(board.hasEnergyAt(emptyPosition), isFalse);
     });
   });

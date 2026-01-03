@@ -11,20 +11,21 @@ _Player _$PlayerFromJson(Map<String, dynamic> json) => _Player(
   piecePosition: Position.fromJson(
     json['piecePosition'] as Map<String, dynamic>,
   ),
-  remainingBorders:
-      (json['remainingBorders'] as num?)?.toInt() ??
-      GameConstants.borderTokensPerPlayer,
+  shortWalls:
+      (json['shortWalls'] as num?)?.toInt() ??
+      GameConstants.shortWallTokensPerPlayer,
+  longWalls:
+      (json['longWalls'] as num?)?.toInt() ??
+      GameConstants.longWallTokensPerPlayer,
   energy: (json['energy'] as num?)?.toInt() ?? 0,
 );
 
 Map<String, dynamic> _$PlayerToJson(_Player instance) => <String, dynamic>{
   'color': _$PlayerColorEnumMap[instance.color]!,
   'piecePosition': instance.piecePosition.toJson(),
-  'remainingBorders': instance.remainingBorders,
+  'shortWalls': instance.shortWalls,
+  'longWalls': instance.longWalls,
   'energy': instance.energy,
 };
 
-const _$PlayerColorEnumMap = {
-  PlayerColor.white: 'white',
-  PlayerColor.black: 'black',
-};
+const _$PlayerColorEnumMap = {PlayerColor.blue: 'blue', PlayerColor.red: 'red'};

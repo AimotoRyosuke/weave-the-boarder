@@ -11,6 +11,7 @@ _BorderEdge _$BorderEdgeFromJson(Map<String, dynamic> json) => _BorderEdge(
   orientation: $enumDecode(_$BorderOrientationEnumMap, json['orientation']),
   owner: $enumDecode(_$PlayerColorEnumMap, json['owner']),
   isFortified: json['isFortified'] as bool? ?? false,
+  groupId: json['groupId'] as String?,
 );
 
 Map<String, dynamic> _$BorderEdgeToJson(_BorderEdge instance) =>
@@ -19,6 +20,7 @@ Map<String, dynamic> _$BorderEdgeToJson(_BorderEdge instance) =>
       'orientation': _$BorderOrientationEnumMap[instance.orientation]!,
       'owner': _$PlayerColorEnumMap[instance.owner]!,
       'isFortified': instance.isFortified,
+      'groupId': instance.groupId,
     };
 
 const _$BorderOrientationEnumMap = {
@@ -28,7 +30,4 @@ const _$BorderOrientationEnumMap = {
   BorderOrientation.left: 'left',
 };
 
-const _$PlayerColorEnumMap = {
-  PlayerColor.white: 'white',
-  PlayerColor.black: 'black',
-};
+const _$PlayerColorEnumMap = {PlayerColor.blue: 'blue', PlayerColor.red: 'red'};

@@ -1,170 +1,53 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:weave_the_border/models/game/board.dart';
-import 'package:weave_the_border/models/game/cell.dart';
 import 'package:weave_the_border/models/game/border_edge.dart';
 import 'package:weave_the_border/models/game/player_color.dart';
 import 'package:weave_the_border/models/game/position.dart';
 import 'package:weave_the_border/services/game/area_detector.dart';
 import 'package:weave_the_border/models/game/game_state.dart';
-import 'package:weave_the_border/core/constants/game_constants.dart';
 
 void main() {
-  group('エリア検出', () {
-    test('同じ色でつながった領域をまとめる', () {
+  group('AreaDetector', () {
+    const detector = AreaDetector();
+
+    test('初期状態で白と黒のエリアが1つずつ存在する', () {
       final state = GameState.initial();
-      const detector = AreaDetector();
 
-      final whiteAreas = detector.detectConnectedAreas(
+      final blueAreas = detector.detectConnectedAreas(
         state.board,
-        PlayerColor.white,
+        PlayerColor.blue,
       );
-      final blackAreas = detector.detectConnectedAreas(
+      final redAreas = detector.detectConnectedAreas(
         state.board,
-        PlayerColor.black,
+        PlayerColor.red,
       );
 
-      expect(whiteAreas, hasLength(1));
-      expect(blackAreas, hasLength(1));
-      expect(
-        whiteAreas.first,
-        contains(
-          state.players
-              .firstWhere((p) => p.color == PlayerColor.white)
-              .piecePosition,
-        ),
-      );
+      expect(blueAreas, hasLength(1));
+      expect(redAreas, hasLength(1));
+      expect(blueAreas.first, contains(const Position(row: 6, col: 3)));
     });
 
-    test('囲まれたエリアを完全に囲めていることを判定できる', () {
+    test('allCellsConnected が壁による分断を正しく検知する', () {
       final initial = GameState.initial();
-      final fencedBoard = initial.board.copyWith(
-        borders: [
-          BorderEdge(
-            anchor: const Position(row: 0, col: 0),
-            orientation: BorderOrientation.right,
-            owner: PlayerColor.white,
-          ),
-          BorderEdge(
-            anchor: const Position(row: 0, col: 0),
-            orientation: BorderOrientation.bottom,
-            owner: PlayerColor.white,
-          ),
-        ],
-      );
-      const detector = AreaDetector();
-      final area = {const Position(row: 0, col: 0)};
 
-      final isEnclosed = detector.isFullyEnclosed(fencedBoard, area);
-      final perimeter = detector.perimeterBorders(fencedBoard, area);
-
-      expect(isEnclosed, isTrue);
-      expect(
-        perimeter.every((edge) => edge.owner == PlayerColor.white),
-        isTrue,
-      );
-      expect(perimeter.length, 2);
-    });
-
-    test('同じプレイヤーの2つの隣接セル間に境界がある場合、2つの別々のエリアとして検出される', () {
-      const detector = AreaDetector();
-      final cells = List.generate(
-        GameConstants.boardSize * GameConstants.boardSize,
-        (index) {
-          final position = Position(
-            row: index ~/ GameConstants.boardSize,
-            col: index % GameConstants.boardSize,
-          );
-          if (position.row == 0 && position.col == 0) {
-            return Cell(position: position, owner: PlayerColor.white);
-          }
-          if (position.row == 0 && position.col == 1) {
-            return Cell(position: position, owner: PlayerColor.white);
-          }
-          return Cell(position: position);
-        },
-      );
-
-      final board = Board(
-        cells: cells,
-        borders: [
-          BorderEdge(
-            anchor: const Position(row: 0, col: 0),
-            orientation: BorderOrientation.right,
-            owner: PlayerColor.black,
-          ),
-        ],
-        energyStacks: const [],
-      );
-
-      final whiteAreas = detector.detectConnectedAreas(board, PlayerColor.white);
-
-      expect(whiteAreas, hasLength(2));
-      expect(whiteAreas, contains(equals({const Position(row: 0, col: 0)})));
-      expect(whiteAreas, contains(equals({const Position(row: 0, col: 1)})));
-    });
-
-    test('複数のセルからなるエリアの内部に境界がある場合、適切に分割される', () {
-      const detector = AreaDetector();
-      final cells = List.generate(
-        GameConstants.boardSize * GameConstants.boardSize,
-        (index) {
-          final position = Position(
-            row: index ~/ GameConstants.boardSize,
-            col: index % GameConstants.boardSize,
-          );
-          if ((position.row == 0 || position.row == 1) &&
-              (position.col == 0 || position.col == 1)) {
-            return Cell(position: position, owner: PlayerColor.white);
-          }
-          return Cell(position: position);
-        },
-      );
-
-      final board = Board(
-        cells: cells,
-        borders: [
-          BorderEdge(
-            anchor: const Position(row: 0, col: 0),
-            orientation: BorderOrientation.right,
-            owner: PlayerColor.black,
-          ),
-          BorderEdge(
-            anchor: const Position(row: 1, col: 0),
-            orientation: BorderOrientation.right,
-            owner: PlayerColor.black,
-          ),
-        ],
-        energyStacks: const [],
-      );
-
-      final whiteAreas = detector.detectConnectedAreas(board, PlayerColor.white);
-
-      expect(whiteAreas, hasLength(2));
-      final area1 = {
-        const Position(row: 0, col: 0),
-        const Position(row: 1, col: 0)
-      };
-      final area2 = {
-        const Position(row: 0, col: 1),
-        const Position(row: 1, col: 1)
-      };
-
-      expect(
-        whiteAreas.any(
-          (area) =>
-              area.length == area1.length &&
-              area.containsAll(area1) &&
-              area1.containsAll(area),
+      // Try to isolate (0,0)
+      final borders = [
+        BorderEdge(
+          anchor: const Position(row: 0, col: 0),
+          orientation: BorderOrientation.right,
+          owner: PlayerColor.blue,
         ),
-        isTrue,
-      );
-      expect(
-        whiteAreas.any(
-          (area) =>
-              area.length == area2.length &&
-              area.containsAll(area2) &&
-              area2.containsAll(area),
+        BorderEdge(
+          anchor: const Position(row: 0, col: 0),
+          orientation: BorderOrientation.bottom,
+          owner: PlayerColor.blue,
         ),
+      ];
+
+      expect(detector.allCellsConnected(initial.board.cells, borders), isFalse);
+
+      // Only one wall doesn't isolate
+      expect(
+        detector.allCellsConnected(initial.board.cells, [borders.first]),
         isTrue,
       );
     });

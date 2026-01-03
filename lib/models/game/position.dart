@@ -8,6 +8,8 @@ part 'position.g.dart';
 sealed class Position with _$Position {
   const Position._();
   const factory Position({required int row, required int col}) = _Position;
+
+  static const none = Position(row: -1, col: -1);
   factory Position.fromJson(Map<String, dynamic> json) =>
       _$PositionFromJson(json);
 

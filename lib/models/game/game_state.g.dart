@@ -13,6 +13,9 @@ _GameState _$GameStateFromJson(Map<String, dynamic> json) => _GameState(
       .toList(),
   currentTurn: $enumDecode(_$PlayerColorEnumMap, json['currentTurn']),
   turnCount: (json['turnCount'] as num?)?.toInt() ?? 0,
+  actionsRemaining:
+      (json['actionsRemaining'] as num?)?.toInt() ??
+      GameConstants.actionsPerTurn,
 );
 
 Map<String, dynamic> _$GameStateToJson(_GameState instance) =>
@@ -21,9 +24,7 @@ Map<String, dynamic> _$GameStateToJson(_GameState instance) =>
       'players': instance.players.map((e) => e.toJson()).toList(),
       'currentTurn': _$PlayerColorEnumMap[instance.currentTurn]!,
       'turnCount': instance.turnCount,
+      'actionsRemaining': instance.actionsRemaining,
     };
 
-const _$PlayerColorEnumMap = {
-  PlayerColor.white: 'white',
-  PlayerColor.black: 'black',
-};
+const _$PlayerColorEnumMap = {PlayerColor.blue: 'blue', PlayerColor.red: 'red'};

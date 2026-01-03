@@ -22,18 +22,12 @@ class GameActionValidator {
   bool canMove(Position destination) =>
       ruleService.canMove(_state, destination);
 
-  bool canPlaceBorder(Position anchor, BorderOrientation orientation) =>
-      ruleService.canPlaceBorder(_state, anchor, orientation);
+  bool canPlaceWall(Position anchor, BorderOrientation orientation) =>
+      ruleService.canPlaceWall(_state, anchor, orientation);
 
-  bool canCollectEnergy(Position energyPosition) =>
-      ruleService.canCollectEnergy(_state, energyPosition);
+  bool canPlaceLongWall(List<BorderEdge> edges) =>
+      ruleService.canPlaceLongWall(_state, edges);
 
-  bool canUseSpecialMove(Position destination) =>
-      ruleService.canUseSpecialMove(_state, destination);
-
-  bool canBreakBorder(BorderEdge edge) =>
-      ruleService.canBreakBorder(_state, edge);
-
-  bool canFortifyArea(Set<Position> area) =>
-      ruleService.canFortifyArea(_state, area);
+  bool canUseDoubleMove(Position destination) =>
+      ruleService.canUseDoubleMove(_state, destination);
 }
