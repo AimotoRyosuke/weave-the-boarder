@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:weave_the_border/core/constants/game_constants.dart';
 import 'package:weave_the_border/models/game/action_type.dart';
 import 'package:weave_the_border/models/game/player_color.dart';
@@ -6,19 +9,18 @@ import 'package:weave_the_border/providers/game/game_controller_provider.dart';
 import 'package:weave_the_border/providers/game/action_provider.dart';
 import 'package:weave_the_border/services/game/game_rule_service.dart';
 import 'package:weave_the_border/services/game/score_calculator.dart';
-import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'widgets/game_board_widget.dart';
 import 'widgets/player_status_widget.dart';
 import 'widgets/action_selector.dart';
 import 'widgets/turn_indicator.dart';
 
-class GameScreen extends ConsumerWidget {
+class GameScreen extends HookConsumerWidget {
   const GameScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final allowPop = useState(false);
     final gameState = ref.watch(gameControllerProvider);
     final currentAction = ref.watch(actionProvider);
     final controller = ref.read(gameControllerProvider.notifier);
@@ -58,9 +60,19 @@ class GameScreen extends ConsumerWidget {
         winner == null;
 
     return PopScope(
-      canPop: false,
+      canPop: allowPop.value,
       child: Scaffold(
         appBar: AppBar(
+          leading: IconButton(
+            icon: const BackButtonIcon(),
+            onPressed: () async {
+              final navigator = Navigator.of(context);
+              allowPop.value = (await _showExitConfirmation(context)) ?? false;
+              if (allowPop.value) {
+                navigator.pop();
+              }
+            },
+          ),
           title: TurnIndicator(currentPlayer: gameState.currentTurn),
         ),
         body: SafeArea(
@@ -115,6 +127,29 @@ class GameScreen extends ConsumerWidget {
               )
             : null,
       ),
+    );
+  }
+
+  Future<bool?> _showExitConfirmation(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('ゲームを終了しますか？', textAlign: TextAlign.center),
+          content: const Text('アプリを抜けてよろしいですか？'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('いいえ'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('はい'),
+            ),
+          ],
+        );
+      },
     );
   }
 
