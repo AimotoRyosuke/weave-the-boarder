@@ -150,11 +150,21 @@ void main() {
       };
 
       expect(
-        whiteAreas.any((area) => area.toString() == area1.toString()),
+        whiteAreas.any(
+          (area) =>
+              area.length == area1.length &&
+              area.containsAll(area1) &&
+              area1.containsAll(area),
+        ),
         isTrue,
       );
       expect(
-        whiteAreas.any((area) => area.toString() == area2.toString()),
+        whiteAreas.any(
+          (area) =>
+              area.length == area2.length &&
+              area.containsAll(area2) &&
+              area2.containsAll(area),
+        ),
         isTrue,
       );
     });
