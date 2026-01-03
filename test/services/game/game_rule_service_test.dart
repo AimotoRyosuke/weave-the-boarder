@@ -221,5 +221,87 @@ void main() {
       expect(relocatedState.board.borders.first.anchor.row, 5);
       expect(relocatedState.activePlayer.energy, 0);
     });
+
+    test('壁を同じ場所に再配置することはできない', () {
+      final initial = GameState.initial();
+      final stateWithWall = service.placeWall(
+        initial,
+        const Position(row: 6, col: 3),
+        BorderOrientation.top,
+      );
+      final wall = stateWithWall.board.borders.first;
+
+      final blueTurn = stateWithWall.copyWith(
+        currentTurn: PlayerColor.blue,
+        actionsRemaining: 1,
+        players: stateWithWall.players
+            .map((p) => p.color == PlayerColor.blue ? p.copyWith(energy: 1) : p)
+            .toList(),
+      );
+
+      // Same location
+      final sameEdges = [
+        const BorderEdge(
+          anchor: Position(row: 6, col: 3),
+          orientation: BorderOrientation.top,
+          owner: PlayerColor.blue,
+        ),
+      ];
+      expect(service.canRelocateWalls(blueTurn, [wall], sameEdges), isFalse);
+
+      // Same location but different representation (Bottom of row 5 instead of Top of row 6)
+      final sameEdgesAlt = [
+        const BorderEdge(
+          anchor: Position(row: 5, col: 3),
+          orientation: BorderOrientation.bottom,
+          owner: PlayerColor.blue,
+        ),
+      ];
+      expect(service.canRelocateWalls(blueTurn, [wall], sameEdgesAlt), isFalse);
+    });
+
+    test('2マス壁の一部を重ねて再配置することはできるが、完全に同じ場所は禁止', () {
+      final initial = GameState.initial();
+      final edges = [
+        const BorderEdge(
+          anchor: Position(row: 6, col: 2),
+          orientation: BorderOrientation.top,
+          owner: PlayerColor.blue,
+        ),
+        const BorderEdge(
+          anchor: Position(row: 6, col: 3),
+          orientation: BorderOrientation.top,
+          owner: PlayerColor.blue,
+        ),
+      ];
+      final stateWithWall = service.placeLongWall(initial, edges);
+      final walls = stateWithWall.board.borders;
+
+      final blueTurn = stateWithWall.copyWith(
+        currentTurn: PlayerColor.blue,
+        actionsRemaining: 1,
+        players: stateWithWall.players
+            .map((p) => p.color == PlayerColor.blue ? p.copyWith(energy: 1) : p)
+            .toList(),
+      );
+
+      // Partially overlapping: (6,3)T stays, (6,2)T moves to (6,4)T
+      final partialEdges = [
+        const BorderEdge(
+          anchor: Position(row: 6, col: 3),
+          orientation: BorderOrientation.top,
+          owner: PlayerColor.blue,
+        ),
+        const BorderEdge(
+          anchor: Position(row: 6, col: 4),
+          orientation: BorderOrientation.top,
+          owner: PlayerColor.blue,
+        ),
+      ];
+      expect(service.canRelocateWalls(blueTurn, walls, partialEdges), isTrue);
+
+      // Exactly the same location
+      expect(service.canRelocateWalls(blueTurn, walls, edges), isFalse);
+    });
   });
 }

@@ -333,32 +333,24 @@ class GameBoardWidget extends ConsumerWidget {
 
     final pending = state.pendingEdges;
     if (pending.isNotEmpty) {
-      if (state.type == ActionType.placeShortWall) {
-        final edge = pending.first;
-        if (ruleService.canPlaceWall(
-          gameState,
-          edge.anchor,
-          edge.orientation,
-        )) {
+      final isValid = ruleService.isValidPlacement(
+        state: gameState,
+        actionType: state.type,
+        pendingEdges: pending,
+        selectedEdges: state.selectedEdges,
+      );
+
+      if (isValid) {
+        if (state.type == ActionType.placeShortWall) {
+          final edge = pending.first;
           ref
               .read(gameControllerProvider.notifier)
               .placeWall(edge.anchor, edge.orientation);
           ref.read(actionProvider.notifier).reset();
-        }
-      } else if (state.type == ActionType.placeLongWall) {
-        if (pending.length == 2 &&
-            ruleService.canPlaceLongWall(gameState, pending)) {
+        } else if (state.type == ActionType.placeLongWall) {
           ref.read(gameControllerProvider.notifier).placeLongWall(pending);
           ref.read(actionProvider.notifier).reset();
-        }
-      } else if (state.type == ActionType.relocateWall &&
-          state.selectedEdges.isNotEmpty) {
-        if (pending.length == state.selectedEdges.length &&
-            ruleService.canRelocateWalls(
-              gameState,
-              state.selectedEdges,
-              pending,
-            )) {
+        } else if (state.type == ActionType.relocateWall) {
           ref
               .read(gameControllerProvider.notifier)
               .relocateWalls(state.selectedEdges, pending);

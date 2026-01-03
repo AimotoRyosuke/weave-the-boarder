@@ -15,8 +15,8 @@ import 'widgets/player_status_widget.dart';
 import 'widgets/action_selector.dart';
 import 'widgets/turn_indicator.dart';
 
-class GameScreen extends HookConsumerWidget {
-  const GameScreen({super.key});
+class LocalGameScreen extends HookConsumerWidget {
+  const LocalGameScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -137,7 +137,7 @@ class GameScreen extends HookConsumerWidget {
       builder: (context) {
         return AlertDialog(
           title: const Text('ゲームを終了しますか？', textAlign: TextAlign.center),
-          content: const Text('アプリを抜けてよろしいですか？'),
+          content: const Text('プレイ中のゲームデータは保存されません。\nよろしいですか？'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),

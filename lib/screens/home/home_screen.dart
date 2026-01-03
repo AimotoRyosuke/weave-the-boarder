@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
-import 'package:weave_the_border/screens/game/game_screen.dart'; // Add this import
+import 'package:weave_the_border/screens/game/local_game_screen.dart'; // Add this import
 
 /// フェーズ4では仮UIとしてモード選択のカードを表示。
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  static void _navigateToGameScreen(BuildContext context) {
+  static void _navigateToLocalGameScreen(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const GameScreen()),
+      MaterialPageRoute(builder: (context) => const LocalGameScreen()),
     );
   }
 
@@ -36,7 +36,7 @@ class HomeScreen extends StatelessWidget {
             _ModeCard(
               title: 'ローカル対戦',
               description: '1台の端末で2人プレイするモード。',
-              onTap: () => _navigateToGameScreen(context), // contextをキャプチャ
+              onTap: () => _navigateToLocalGameScreen(context), // contextをキャプチャ
             ),
             const _ModeCard(
               title: 'オンライン対戦',

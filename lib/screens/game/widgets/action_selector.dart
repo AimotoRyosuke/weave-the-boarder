@@ -12,49 +12,87 @@ class ActionSelector extends ConsumerWidget {
     final selectedAction = ref.watch(actionProvider);
     final notifier = ref.read(actionProvider.notifier);
     final gameState = ref.watch(gameControllerProvider);
-    final hasEnergy = gameState.activePlayer.energy > 0;
+    final activePlayer = gameState.activePlayer;
+    final hasEnergy = activePlayer.energy > 0;
+    final hasShortWalls = activePlayer.shortWalls > 0;
+    final hasLongWalls = activePlayer.longWalls > 0;
 
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      alignment: WrapAlignment.center,
+    String description = '';
+    switch (selectedAction.type) {
+      case ActionType.move:
+        description = 'コマを移動させたいマスをタップしてください。';
+      case ActionType.placeShortWall:
+        description = '壁を置きたい場所をタップしてください。';
+      case ActionType.placeLongWall:
+        description = '壁を置きたい場所をタップし2マス分なぞってください。';
+      case ActionType.doubleMove:
+        description = 'コマを移動させたいマスをタップしてください。';
+      case ActionType.relocateWall:
+        description = selectedAction.selectedEdges.isEmpty
+            ? '移動させたい自分の壁をタップしてください。'
+            : '移動先を選択してください。';
+    }
+
+    return Column(
       children: [
-        _ActionChip(
-          label: '移動',
-          icon: Icons.directions_run,
-          cost: 0,
-          isSelected: selectedAction.type == ActionType.move,
-          onTap: () => notifier.select(ActionType.move),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          alignment: WrapAlignment.center,
+          children: [
+            _ActionChip(
+              label: '移動',
+              icon: Icons.directions_run,
+              cost: 0,
+              isSelected: selectedAction.type == ActionType.move,
+              onTap: () => notifier.select(ActionType.move),
+            ),
+            _ActionChip(
+              label: '1マス壁',
+              icon: Icons.remove,
+              cost: 0,
+              isSelected: selectedAction.type == ActionType.placeShortWall,
+              isEnabled: hasShortWalls,
+              onTap: () => notifier.select(ActionType.placeShortWall),
+            ),
+            _ActionChip(
+              label: '2マス壁',
+              icon: Icons.reorder,
+              cost: 0,
+              isSelected: selectedAction.type == ActionType.placeLongWall,
+              isEnabled: hasLongWalls,
+              onTap: () => notifier.select(ActionType.placeLongWall),
+            ),
+            _ActionChip(
+              label: '2マス移動',
+              icon: Icons.bolt,
+              cost: 1,
+              isSelected: selectedAction.type == ActionType.doubleMove,
+              isEnabled: hasEnergy,
+              onTap: () => notifier.select(ActionType.doubleMove),
+            ),
+            _ActionChip(
+              label: '壁移動',
+              icon: Icons.move_up,
+              cost: 1,
+              isSelected: selectedAction.type == ActionType.relocateWall,
+              isEnabled: hasEnergy,
+              onTap: () => notifier.select(ActionType.relocateWall),
+            ),
+          ],
         ),
-        _ActionChip(
-          label: '1マス壁',
-          icon: Icons.remove,
-          cost: 0,
-          isSelected: selectedAction.type == ActionType.placeShortWall,
-          onTap: () => notifier.select(ActionType.placeShortWall),
-        ),
-        _ActionChip(
-          label: '2マス壁',
-          icon: Icons.reorder,
-          cost: 0,
-          isSelected: selectedAction.type == ActionType.placeLongWall,
-          onTap: () => notifier.select(ActionType.placeLongWall),
-        ),
-        _ActionChip(
-          label: '2マス移動',
-          icon: Icons.bolt,
-          cost: 1,
-          isSelected: selectedAction.type == ActionType.doubleMove,
-          isEnabled: hasEnergy,
-          onTap: () => notifier.select(ActionType.doubleMove),
-        ),
-        _ActionChip(
-          label: '壁移動',
-          icon: Icons.move_up,
-          cost: 1,
-          isSelected: selectedAction.type == ActionType.relocateWall,
-          isEnabled: hasEnergy,
-          onTap: () => notifier.select(ActionType.relocateWall),
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            description,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ),
       ],
     );

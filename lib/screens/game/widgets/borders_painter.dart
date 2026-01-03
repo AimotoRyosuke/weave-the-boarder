@@ -8,6 +8,8 @@ import 'package:weave_the_border/models/game/action_type.dart';
 import 'package:weave_the_border/services/game/border_helper.dart';
 import 'package:weave_the_border/services/game/game_rule_service.dart';
 
+/// 盤面上の「壁（境界線）」を描画するための CustomPainter。
+/// 既存の壁、配置中のプレビュー、配置可能なヒント、配置不可の「×」印を描画します。
 class BordersPainter extends CustomPainter {
   BordersPainter({
     required this.gameState,
@@ -31,9 +33,10 @@ class BordersPainter extends CustomPainter {
       ..strokeWidth = 4.0
       ..style = PaintingStyle.stroke;
 
-    // Draw existing walls
+    // 1. 既に配置されている壁を描画
     for (final edge in gameState.board.borders) {
       if (selectedEdges.contains(edge)) {
+        // 壁移動アクションで選択中の壁は強調表示（アンバー色）
         borderPaint.color = Colors.amber;
         borderPaint.strokeWidth = 8.0;
       } else {
@@ -43,12 +46,33 @@ class BordersPainter extends CustomPainter {
       _drawBorder(canvas, edge, borderPaint, gameState.board.borders);
     }
 
-    // Draw pending wall (being dragged)
+    // 2. ドラッグ操作中（配置・移動中）の壁を描画
     if (pendingEdges.isNotEmpty) {
+      final isValid =
+          ruleService?.isValidPlacement(
+            state: gameState,
+            actionType: actionType,
+            pendingEdges: pendingEdges,
+            selectedEdges: selectedEdges,
+          ) ??
+          true;
+
+      // 操作が未完了（2マス壁の1マス目だけ等）かどうかの判定
+      bool isIncomplete = false;
+      if (actionType == ActionType.placeLongWall && pendingEdges.length < 2) {
+        isIncomplete = true;
+      } else if (actionType == ActionType.relocateWall &&
+          selectedEdges.isNotEmpty &&
+          pendingEdges.length < selectedEdges.length) {
+        isIncomplete = true;
+      }
+
+      // 配置可能ならライトグリーン、不可なら赤
       final pendingPaint = Paint()
         ..strokeWidth = 8.0
         ..style = PaintingStyle.stroke
-        ..color = Colors.white.withValues(alpha: 0.8)
+        ..color = (isValid || isIncomplete ? Colors.lightGreen : Colors.red)
+            .withValues(alpha: 0.8)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.0);
 
       for (final edge in pendingEdges) {
@@ -56,7 +80,7 @@ class BordersPainter extends CustomPainter {
       }
     }
 
-    // Draw placement hints and "X" marks
+    // 3. 配置ヒント（薄い壁）と配置不可の「×」印を描画
     if (ruleService != null) {
       final hintPaint = Paint()
         ..strokeWidth = 6.0
@@ -70,6 +94,7 @@ class BordersPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..color = Colors.red.withValues(alpha: 0.6);
 
+      // 壁を配置または移動するモードの時のみ表示
       if (actionType == ActionType.placeShortWall ||
           actionType == ActionType.placeLongWall ||
           (actionType == ActionType.relocateWall && selectedEdges.isNotEmpty)) {
@@ -80,13 +105,13 @@ class BordersPainter extends CustomPainter {
               final neighbor = pos.offset(orientation.dRow, orientation.dCol);
               if (!neighbor.isOnBoard) continue;
 
-              // Only check each edge once to avoid double drawing
+              // 重複描画（同じ辺を逆方向からチェック）を避ける
               if (pos.row > neighbor.row ||
                   (pos.row == neighbor.row && pos.col > neighbor.col)) {
                 continue;
               }
 
-              // Check if already occupied
+              // 既に壁がある場合はスキップ
               if (BorderHelper.hasBorderBetween(
                 pos,
                 neighbor,
@@ -97,6 +122,7 @@ class BordersPainter extends CustomPainter {
 
               bool canPlaceAtLeastOne = false;
 
+              // 該当する辺に壁を置ける可能性があるかチェック
               if (actionType == ActionType.placeShortWall) {
                 canPlaceAtLeastOne = ruleService!.canPlaceWall(
                   gameState,
@@ -105,20 +131,18 @@ class BordersPainter extends CustomPainter {
                 );
               } else if (actionType == ActionType.relocateWall &&
                   selectedEdges.isNotEmpty) {
+                // 壁移動のヒント計算
                 if (selectedEdges.length == 1) {
-                  canPlaceAtLeastOne = ruleService!.canRelocateWalls(
-                    gameState,
-                    selectedEdges,
-                    [
-                      BorderEdge(
-                        anchor: pos,
-                        orientation: orientation,
-                        owner: gameState.activePlayer.color,
-                      ),
-                    ],
-                  );
+                  canPlaceAtLeastOne = ruleService!
+                      .canRelocateWalls(gameState, selectedEdges, [
+                        BorderEdge(
+                          anchor: pos,
+                          orientation: orientation,
+                          owner: gameState.activePlayer.color,
+                        ),
+                      ]);
                 } else {
-                  // For 2nd wall relocation, try both extensions
+                  // 2マス壁の移動先として、隣接する辺を含めて判定
                   final neighbors = [
                     (orientation == BorderOrientation.top ||
                             orientation == BorderOrientation.bottom)
@@ -155,7 +179,7 @@ class BordersPainter extends CustomPainter {
                   }
                 }
               } else if (actionType == ActionType.placeLongWall) {
-                // ... (existing long wall hint logic)
+                // 2マス壁の配置ヒント計算
                 final neighbors = [
                   (orientation == BorderOrientation.top ||
                           orientation == BorderOrientation.bottom)
@@ -189,6 +213,7 @@ class BordersPainter extends CustomPainter {
               }
 
               if (canPlaceAtLeastOne) {
+                // 配置可能なら薄いヒントを描画
                 _drawBorder(
                   canvas,
                   BorderEdge(
@@ -199,8 +224,8 @@ class BordersPainter extends CustomPainter {
                   hintPaint,
                   [],
                 );
-              } else if (actionType != ActionType.relocateWall) {
-                // Skip X for relocate hints
+              } else {
+                // 配置不可なら「×」印を描画
                 _drawX(canvas, pos, orientation, xPaint);
               }
             }
@@ -210,6 +235,7 @@ class BordersPainter extends CustomPainter {
     }
   }
 
+  /// 辺（BorderEdge）を指定された Paint で描画します。
   void _drawBorder(
     Canvas canvas,
     BorderEdge edge,
@@ -217,18 +243,20 @@ class BordersPainter extends CustomPainter {
     List<BorderEdge> contextEdges,
   ) {
     double startX, startY, endX, endY;
+    // 角が飛び出さないようにするための余白
     const insetSize = 4.0;
 
     final orientation = edge.orientation;
     final anchor = edge.anchor;
 
-    // Determine if we should apply insets based on group connection
+    // 2マス壁のようにつながっている場合、接続部分の余白をなくして隙間を埋める
     bool hasConnectionStart = false;
     bool hasConnectionEnd = false;
 
     if (edge.groupId != null) {
       if (orientation == BorderOrientation.top ||
           orientation == BorderOrientation.bottom) {
+        // 横方向の壁の接続チェック
         hasConnectionStart = contextEdges.any(
           (e) =>
               e.groupId == edge.groupId &&
@@ -242,6 +270,7 @@ class BordersPainter extends CustomPainter {
               e.anchor == anchor.offset(0, 1),
         );
       } else {
+        // 縦方向の壁の接続チェック
         hasConnectionStart = contextEdges.any(
           (e) =>
               e.groupId == edge.groupId &&
@@ -260,6 +289,7 @@ class BordersPainter extends CustomPainter {
     final startInset = hasConnectionStart ? 0.0 : insetSize;
     final endInset = hasConnectionEnd ? 0.0 : insetSize;
 
+    // 向きに基づいて線の始点と終点を計算
     switch (orientation) {
       case BorderOrientation.top:
         startX = anchor.col * cellSize + startInset;
@@ -286,6 +316,7 @@ class BordersPainter extends CustomPainter {
     canvas.drawLine(Offset(startX, startY), Offset(endX, endY), paint);
   }
 
+  /// 辺の中心に「×」印を描画します。
   void _drawX(
     Canvas canvas,
     Position anchor,

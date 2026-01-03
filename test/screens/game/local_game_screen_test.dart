@@ -4,7 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:weave_the_border/models/game/game_state.dart';
 import 'package:weave_the_border/models/game/position.dart';
 import 'package:weave_the_border/providers/game/game_controller_provider.dart';
-import 'package:weave_the_border/screens/game/game_screen.dart';
+import 'package:weave_the_border/screens/game/local_game_screen.dart';
 import 'package:weave_the_border/screens/game/widgets/board_cell_widget.dart';
 import 'package:weave_the_border/screens/game/widgets/energy_token_widget.dart';
 import 'package:weave_the_border/screens/game/widgets/player_piece_widget.dart';
@@ -39,7 +39,7 @@ void main() {
         overrides: [
           gameControllerProvider.overrideWith(() => MockGameController()),
         ],
-        child: const MaterialApp(home: GameScreen()),
+        child: const MaterialApp(home: LocalGameScreen()),
       ),
     );
 
@@ -64,7 +64,7 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const MaterialApp(home: GameScreen()),
+        child: const MaterialApp(home: LocalGameScreen()),
       ),
     );
 
