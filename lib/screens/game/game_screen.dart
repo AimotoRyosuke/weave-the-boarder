@@ -3,6 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:weave_the_border/providers/game/game_controller_provider.dart';
 
 import 'widgets/game_board_widget.dart';
+import 'widgets/turn_indicator.dart';
 
 class GameScreen extends ConsumerWidget {
   const GameScreen({super.key});
@@ -13,7 +14,7 @@ class GameScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Weave the Border'),
+        title: TurnIndicator(currentPlayer: gameState.currentTurn),
       ),
       body: Center(
         child: Padding(
@@ -23,6 +24,13 @@ class GameScreen extends ConsumerWidget {
             child: GameBoardWidget(gameState: gameState),
           ),
         ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          ref.read(gameControllerProvider.notifier).endTurn();
+        },
+        label: const Text('End Turn'),
+        icon: const Icon(Icons.arrow_forward),
       ),
     );
   }

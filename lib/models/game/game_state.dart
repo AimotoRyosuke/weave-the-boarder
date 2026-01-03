@@ -17,6 +17,7 @@ sealed class GameState with _$GameState {
     required List<Player> players,
     required PlayerColor currentTurn,
     @Default(0) int turnCount,
+    @Default(false) bool hasTakenBasicAction,
   }) = _GameState;
 
   static GameState initial() {

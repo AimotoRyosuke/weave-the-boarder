@@ -29,6 +29,9 @@ class GameRuleService {
       scoreCalculator.evaluate(state)[color]!;
 
   bool canMove(GameState state, Position target) {
+    if (state.hasTakenBasicAction) {
+      return false;
+    }
     if (!target.isOnBoard) {
       return false;
     }
@@ -61,16 +64,19 @@ class GameRuleService {
     Position anchor,
     BorderOrientation orientation,
   ) {
+    if (state.hasTakenBasicAction) {
+      return false;
+    }
     if (!anchor.isOnBoard) {
       return false;
     }
 
-    if (BorderHelper.findByAnchor(anchor, orientation, state.board.borders) !=
+    final boundaryNeighbor = BorderHelper.getNeighbor(anchor, orientation);
+    if (BorderHelper.findEdgeBetween(anchor, boundaryNeighbor, state.board.borders) !=
         null) {
       return false;
     }
 
-    final boundaryNeighbor = BorderHelper.getNeighbor(anchor, orientation);
     final board = state.board;
     final owner = state.activePlayer.color;
 
@@ -87,6 +93,9 @@ class GameRuleService {
   }
 
   bool canCollectEnergy(GameState state, Position energyPosition) {
+    if (state.hasTakenBasicAction) {
+      return false;
+    }
     final stack = state.board.stackAt(energyPosition);
     if (!stack.hasTokens) {
       return false;
@@ -105,16 +114,27 @@ class GameRuleService {
   }
 
   bool canUseSpecialMove(GameState state, Position target) {
-    return hasEnoughEnergy(state, specialMoveCost) && canMove(state, target);
+    // Special actions don't check hasTakenBasicAction
+    if (!hasEnoughEnergy(state, specialMoveCost)) {
+      return false;
+    }
+    // We reuse logic but without the basic action check
+    if (!target.isOnBoard) return false;
+    if (target == state.activePlayer.piecePosition) return false;
+    if (BorderHelper.orientationBetween(state.activePlayer.piecePosition, target) == null) return false;
+    if (state.board.cellAt(target).owner != null) return false;
+    if (BorderHelper.hasBorderBetween(state.activePlayer.piecePosition, target, state.board.borders)) return false;
+    return true;
   }
 
   bool canBreakBorder(GameState state, BorderEdge edge) {
     if (!hasEnoughEnergy(state, specialBreakCost)) {
       return false;
     }
+    final targetNeighbor = BorderHelper.getNeighbor(edge.anchor, edge.orientation);
     final existing = BorderHelper.findEdgeBetween(
       edge.anchor,
-      BorderHelper.getNeighbor(edge.anchor, edge.orientation),
+      targetNeighbor,
       state.board.borders,
     );
     if (existing == null) {
@@ -156,6 +176,10 @@ class GameRuleService {
 
   GameState movePiece(GameState state, Position destination) {
     _ensure(canMove(state, destination), '移動できないマスです。');
+    return _applyMove(state, destination).copyWith(hasTakenBasicAction: true);
+  }
+
+  GameState _applyMove(GameState state, Position destination) {
     final board = state.board;
     final updatedCells = board.cells.map((cell) {
       if (cell.position == destination) {
@@ -195,6 +219,7 @@ class GameRuleService {
     return state.copyWith(
       board: state.board.copyWith(borders: updatedBorders),
       players: _replacePlayer(state.players, updatedPlayer),
+      hasTakenBasicAction: true,
     );
   }
 
@@ -217,13 +242,14 @@ class GameRuleService {
     return state.copyWith(
       board: updatedBoard,
       players: _replacePlayer(state.players, updatedPlayer),
+      hasTakenBasicAction: true,
     );
   }
 
   GameState specialMove(GameState state, Position destination) {
     _ensure(canUseSpecialMove(state, destination), '特殊移動を実行できません。');
 
-    final movedState = movePiece(state, destination);
+    final movedState = _applyMove(state, destination);
     final afterCost = _deductEnergy(movedState, specialMoveCost);
     return afterCost;
   }
@@ -285,6 +311,7 @@ class GameRuleService {
       board: refreshedBoard,
       currentTurn: nextTurn,
       turnCount: state.turnCount + 1,
+      hasTakenBasicAction: false,
     );
   }
 
