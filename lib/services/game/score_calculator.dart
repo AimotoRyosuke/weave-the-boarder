@@ -2,41 +2,31 @@ import 'package:flutter/foundation.dart';
 import 'package:weave_the_border/core/constants/game_constants.dart';
 import 'package:weave_the_border/models/game/game_state.dart';
 import 'package:weave_the_border/models/game/player_color.dart';
-import 'package:weave_the_border/services/game/area_detector.dart';
 
 @immutable
 class ScoreDetail {
-  const ScoreDetail({
-    required this.territoryCount,
-    required this.completedAreas,
-    required this.energy,
-  });
+  const ScoreDetail({required this.territoryCount});
 
   final int territoryCount;
-  final int completedAreas;
-  final int energy;
 
-  int get total =>
-      territoryCount + completedAreas * GameConstants.areaBonusScore + energy;
+  int get total => territoryCount;
 }
 
 @immutable
 class ScoreResult {
-  const ScoreResult({required this.white, required this.black});
+  const ScoreResult({required this.blue, required this.red});
 
-  final ScoreDetail white;
-  final ScoreDetail black;
+  final ScoreDetail blue;
+  final ScoreDetail red;
 }
 
 class ScoreCalculator {
-  const ScoreCalculator([this.areaDetector = const AreaDetector()]);
-
-  final AreaDetector areaDetector;
+  const ScoreCalculator();
 
   Map<PlayerColor, ScoreDetail> evaluate(GameState state) {
     return {
-      PlayerColor.white: _evaluateFor(state, PlayerColor.white),
-      PlayerColor.black: _evaluateFor(state, PlayerColor.black),
+      PlayerColor.blue: _evaluateFor(state, PlayerColor.blue),
+      PlayerColor.red: _evaluateFor(state, PlayerColor.red),
     };
   }
 
@@ -44,26 +34,18 @@ class ScoreCalculator {
     final territory = state.board.cells
         .where((cell) => cell.owner == color)
         .length;
-    final areas = areaDetector.detectConnectedAreas(state.board, color);
-    final completedAreas = areas
-        .where((area) => areaDetector.isFullyEnclosed(state.board, area))
-        .length;
-    final energy = state.player(color).energy;
 
-    return ScoreDetail(
-      territoryCount: territory,
-      completedAreas: completedAreas,
-      energy: energy,
-    );
+    return ScoreDetail(territoryCount: territory);
   }
 
   PlayerColor? winner(GameState state) {
     final scores = evaluate(state);
-    final whiteTotal = scores[PlayerColor.white]!.total;
-    final blackTotal = scores[PlayerColor.black]!.total;
-    if (whiteTotal == blackTotal) {
-      return null;
+    if (scores[PlayerColor.blue]!.territoryCount >= GameConstants.cellsToWin) {
+      return PlayerColor.blue;
     }
-    return whiteTotal > blackTotal ? PlayerColor.white : PlayerColor.black;
+    if (scores[PlayerColor.red]!.territoryCount >= GameConstants.cellsToWin) {
+      return PlayerColor.red;
+    }
+    return null;
   }
 }

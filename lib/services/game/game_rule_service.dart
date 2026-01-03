@@ -1,182 +1,354 @@
 import 'package:weave_the_border/core/constants/game_constants.dart';
 import 'package:weave_the_border/core/exceptions/invalid_action_exception.dart';
 import 'package:weave_the_border/models/game/border_edge.dart';
-import 'package:weave_the_border/models/game/board.dart';
 import 'package:weave_the_border/models/game/energy_token_stack.dart';
 import 'package:weave_the_border/models/game/game_state.dart';
 import 'package:weave_the_border/models/game/player.dart';
-import 'package:weave_the_border/models/game/player_color.dart';
 import 'package:weave_the_border/models/game/position.dart';
 import 'package:weave_the_border/services/game/area_detector.dart';
 import 'package:weave_the_border/services/game/border_helper.dart';
-import 'package:weave_the_border/services/game/score_calculator.dart';
 
 class GameRuleService {
   const GameRuleService([this.areaDetector = const AreaDetector()]);
 
-  static const specialMoveCost = 1;
-  static const specialBreakCost = 2;
-  static const specialFortifyCost = 3;
-
   final AreaDetector areaDetector;
 
-  ScoreCalculator get scoreCalculator => ScoreCalculator(areaDetector);
-
-  Map<PlayerColor, ScoreDetail> score(GameState state) =>
-      scoreCalculator.evaluate(state);
-
-  ScoreDetail detail(GameState state, PlayerColor color) =>
-      scoreCalculator.evaluate(state)[color]!;
-
   bool canMove(GameState state, Position target) {
-    if (state.hasTakenBasicAction) {
-      return false;
+    if (state.actionsRemaining <= 0) return false;
+    if (!target.isOnBoard) return false;
+
+    // Cannot move to a cell occupied by ANY player's piece
+    for (final p in state.players) {
+      if (p.piecePosition == target) return false;
     }
-    if (!target.isOnBoard) {
-      return false;
-    }
-    if (target == state.activePlayer.piecePosition) {
-      return false;
-    }
-    final orientation = BorderHelper.orientationBetween(
-      state.activePlayer.piecePosition,
-      target,
-    );
-    if (orientation == null) {
-      return false;
-    }
-    final targetCell = state.board.cellAt(target);
-    if (targetCell.owner != null) {
-      return false;
-    }
-    if (BorderHelper.hasBorderBetween(
-      state.activePlayer.piecePosition,
-      target,
-      state.board.borders,
-    )) {
-      return false;
-    }
-    return true;
+
+    final source = state.activePlayer.piecePosition;
+    final orientation = BorderHelper.orientationBetween(source, target);
+    if (orientation == null) return false;
+
+    // Check for wall
+    return !BorderHelper.hasBorderBetween(source, target, state.board.borders);
   }
 
-  bool canPlaceBorder(
+  bool canPlaceWall(
     GameState state,
     Position anchor,
     BorderOrientation orientation,
   ) {
-    if (state.hasTakenBasicAction) {
-      return false;
-    }
-    if (!anchor.isOnBoard) {
-      return false;
-    }
+    if (state.actionsRemaining <= 0) return false;
+    if (state.activePlayer.shortWalls <= 0) return false;
+    if (!anchor.isOnBoard) return false;
 
-    final boundaryNeighbor = BorderHelper.getNeighbor(anchor, orientation);
-    if (BorderHelper.findEdgeBetween(anchor, boundaryNeighbor, state.board.borders) !=
+    final neighbor = BorderHelper.getNeighbor(anchor, orientation);
+    if (!neighbor.isOnBoard) return false;
+
+    // Already has a wall
+    if (BorderHelper.findEdgeBetween(anchor, neighbor, state.board.borders) !=
         null) {
       return false;
     }
 
-    final board = state.board;
-    final owner = state.activePlayer.color;
-
-    final isAnchorOwned = board.cellAt(anchor).owner == owner;
-    final isNeighborOwned = boundaryNeighbor.isOnBoard
-        ? board.cellAt(boundaryNeighbor).owner == owner
-        : false;
-
-    if (!isAnchorOwned && !isNeighborOwned) {
-      return false;
-    }
-
-    return state.activePlayer.remainingBorders > 0;
+    // Connectivity check
+    final tempBorders = [
+      ...state.board.borders,
+      BorderEdge(
+        anchor: anchor,
+        orientation: orientation,
+        owner: state.activePlayer.color,
+      ),
+    ];
+    return areaDetector.allCellsConnected(state.board.cells, tempBorders);
   }
 
-  bool canCollectEnergy(GameState state, Position energyPosition) {
-    if (state.hasTakenBasicAction) {
-      return false;
-    }
-    final stack = state.board.stackAt(energyPosition);
-    if (!stack.hasTokens) {
-      return false;
-    }
-    if (state.activePlayer.energy >= GameConstants.maxEnergyTokens) {
-      return false;
-    }
-    if (_isCenter(energyPosition)) {
-      return true;
-    }
-    return _adjacentToControlledCell(
-      state.board,
-      energyPosition,
-      state.activePlayer.color,
-    );
-  }
+  bool canPlaceLongWall(GameState state, List<BorderEdge> edges) {
+    if (state.actionsRemaining <= 0) return false;
+    if (state.activePlayer.longWalls <= 0) return false;
+    if (edges.length != 2) return false;
 
-  bool canUseSpecialMove(GameState state, Position target) {
-    // Special actions don't check hasTakenBasicAction
-    if (!hasEnoughEnergy(state, specialMoveCost)) {
-      return false;
-    }
-    // We reuse logic but without the basic action check
-    if (!target.isOnBoard) return false;
-    if (target == state.activePlayer.piecePosition) return false;
-    if (BorderHelper.orientationBetween(state.activePlayer.piecePosition, target) == null) return false;
-    if (state.board.cellAt(target).owner != null) return false;
-    if (BorderHelper.hasBorderBetween(state.activePlayer.piecePosition, target, state.board.borders)) return false;
-    return true;
-  }
+    // Check if straight line
+    if (edges[0].orientation != edges[1].orientation) return false;
 
-  bool canBreakBorder(GameState state, BorderEdge edge) {
-    if (!hasEnoughEnergy(state, specialBreakCost)) {
-      return false;
-    }
-    final targetNeighbor = BorderHelper.getNeighbor(edge.anchor, edge.orientation);
-    final existing = BorderHelper.findEdgeBetween(
-      edge.anchor,
-      targetNeighbor,
-      state.board.borders,
-    );
-    if (existing == null) {
-      return false;
-    }
-    if (existing.owner == state.activePlayer.color) {
-      return false;
-    }
-    if (existing.isFortified) {
-      return false;
-    }
-    return true;
-  }
+    // Crossing check
+    if (_isCrossing(state, edges)) return false;
 
-  bool canFortifyArea(GameState state, Set<Position> area) {
-    if (!hasEnoughEnergy(state, specialFortifyCost)) {
-      return false;
-    }
-    if (area.isEmpty) {
-      return false;
-    }
-    for (final position in area) {
-      if (!position.isOnBoard) {
-        return false;
-      }
-      if (state.board.cellAt(position).owner != state.activePlayer.color) {
+    for (final edge in edges) {
+      if (!edge.anchor.isOnBoard) return false;
+      final neighbor = BorderHelper.getNeighbor(edge.anchor, edge.orientation);
+      if (!neighbor.isOnBoard) return false;
+      if (BorderHelper.findEdgeBetween(
+            edge.anchor,
+            neighbor,
+            state.board.borders,
+          ) !=
+          null) {
         return false;
       }
     }
-    if (!areaDetector.isFullyEnclosed(state.board, area)) {
-      return false;
-    }
-    final perimeter = areaDetector.perimeterBorders(state.board, area);
-    return perimeter.any((edge) => edge.owner == state.activePlayer.color);
+
+    // Connectivity check
+    final tempBorders = [...state.board.borders, ...edges];
+    return areaDetector.allCellsConnected(state.board.cells, tempBorders);
   }
 
-  bool hasEnoughEnergy(GameState state, int cost) =>
-      state.activePlayer.energy >= cost;
+  bool _isCrossing(GameState state, List<BorderEdge> edges) {
+    if (edges.length != 2) return false;
+    final e1 = edges[0];
+    final e2 = edges[1];
+
+    // Identify the "center" of the proposed wall
+    // For horizontal (top/bottom), center is between e1.col and e2.col
+    // For vertical (left/right), center is between e1.row and e2.row
+
+    final bool isHorizontal =
+        e1.orientation == BorderOrientation.top ||
+        e1.orientation == BorderOrientation.bottom;
+
+    // We search for a wall of the opposite orientation that shares the same intersection point
+    for (final border in state.board.borders) {
+      if (border.groupId == null) continue;
+
+      // Find another edge in the same group
+      final sibling = state.board.borders.firstWhere(
+        (b) => b.groupId == border.groupId && b != border,
+        orElse: () => border,
+      );
+      if (sibling == border) continue; // Not a 2-cell wall
+
+      final bool otherIsHorizontal =
+          border.orientation == BorderOrientation.top ||
+          border.orientation == BorderOrientation.bottom;
+
+      if (isHorizontal != otherIsHorizontal) {
+        // Potential intersection.
+        // Horizontal wall at Row R boundary, Col C and C+1. Center Vertex (R, C+1)
+        // Vertical wall at Col C boundary, Row R and R+1. Center Vertex (R+1, C)
+        // Correct Logic:
+        // A horizontal 2nd wall spanning (r, c) and (r, c+1) on row boundary R
+        // has center (R, c+1).
+        // A vertical 2nd wall spanning (r, c) and (r+1, c) on col boundary C
+        // has center (r+1, C).
+
+        // Let's find the centers.
+        final center1 = _getWallCenter(e1, e2);
+        final center2 = _getWallCenter(border, sibling);
+
+        if (center1 != null && center2 != null && center1 == center2) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // Returns the vertex coordinate (top-left of a cell) that acts as the center of a 2-cell wall
+  Position? _getWallCenter(BorderEdge e1, BorderEdge e2) {
+    if (e1.orientation != e2.orientation) return null;
+
+    final r1 = e1.anchor.row;
+    final c1 = e1.anchor.col;
+    final r2 = e2.anchor.row;
+    final c2 = e2.anchor.col;
+
+    switch (e1.orientation) {
+      case BorderOrientation.top:
+        // Center is at the row boundary above, between the two cols
+        return Position(row: r1, col: (c1 < c2 ? c2 : c1));
+      case BorderOrientation.bottom:
+        // Center is at the row boundary below
+        return Position(row: r1 + 1, col: (c1 < c2 ? c2 : c1));
+      case BorderOrientation.left:
+        // Center is at the col boundary to the left, between the two rows
+        return Position(row: (r1 < r2 ? r2 : r1), col: c1);
+      case BorderOrientation.right:
+        // Center is at the col boundary to the right
+        return Position(row: (r1 < r2 ? r2 : r1), col: c1 + 1);
+    }
+  }
+
+  bool hasEnergy(GameState state) => state.activePlayer.energy > 0;
+
+  bool canUseDoubleMove(GameState state, Position target) {
+    if (state.actionsRemaining <= 0 || !hasEnergy(state)) return false;
+    final start = state.activePlayer.piecePosition;
+
+    // Cannot move to a cell occupied by ANY player's piece
+    for (final p in state.players) {
+      if (p.piecePosition == target) return false;
+    }
+
+    // Exclude cells reachable in 1 step
+    if (_isReachable(state, start, target, 1)) return false;
+
+    // Must be reachable in 2 steps
+    return _isReachable(state, start, target, 2);
+  }
+
+  bool _isReachable(
+    GameState state,
+    Position start,
+    Position end,
+    int maxSteps,
+  ) {
+    if (start == end) return true;
+    if (maxSteps <= 0) return false;
+
+    for (final neighbor in BorderHelper.orthogonalNeighbors(start)) {
+      if (!neighbor.isOnBoard) continue;
+      if (BorderHelper.hasBorderBetween(start, neighbor, state.board.borders)) {
+        continue;
+      }
+
+      bool occupied = false;
+      for (final p in state.players) {
+        if (p.piecePosition == neighbor && neighbor != end) occupied = true;
+      }
+      if (occupied) continue;
+
+      if (_isReachable(state, neighbor, end, maxSteps - 1)) return true;
+    }
+    return false;
+  }
 
   GameState movePiece(GameState state, Position destination) {
     _ensure(canMove(state, destination), '移動できないマスです。');
-    return _applyMove(state, destination).copyWith(hasTakenBasicAction: true);
+
+    var newState = _applyMove(state, destination);
+    newState = _collectEnergyIfAny(newState, destination);
+
+    return newState.copyWith(actionsRemaining: state.actionsRemaining - 1);
+  }
+
+  GameState placeWall(
+    GameState state,
+    Position anchor,
+    BorderOrientation orientation,
+  ) {
+    _ensure(canPlaceWall(state, anchor, orientation), '壁を配置できません。');
+
+    final newEdge = BorderEdge(
+      anchor: anchor,
+      orientation: orientation,
+      owner: state.activePlayer.color,
+      groupId: DateTime.now().toIso8601String(),
+    );
+
+    final updatedBorders = [...state.board.borders, newEdge];
+    final updatedPlayer = state.activePlayer.copyWith(
+      shortWalls: state.activePlayer.shortWalls - 1,
+    );
+
+    return state.copyWith(
+      board: state.board.copyWith(borders: updatedBorders),
+      players: _replacePlayer(state.players, updatedPlayer),
+      actionsRemaining: state.actionsRemaining - 1,
+    );
+  }
+
+  GameState placeLongWall(GameState state, List<BorderEdge> edges) {
+    _ensure(canPlaceLongWall(state, edges), '長壁を配置できません。');
+
+    final groupId = DateTime.now().toIso8601String();
+    final updatedEdges = edges
+        .map(
+          (e) => e.copyWith(owner: state.activePlayer.color, groupId: groupId),
+        )
+        .toList();
+
+    final updatedBorders = [...state.board.borders, ...updatedEdges];
+    final updatedPlayer = state.activePlayer.copyWith(
+      longWalls: state.activePlayer.longWalls - 1,
+    );
+
+    return state.copyWith(
+      board: state.board.copyWith(borders: updatedBorders),
+      players: _replacePlayer(state.players, updatedPlayer),
+      actionsRemaining: state.actionsRemaining - 1,
+    );
+  }
+
+  bool canRelocateWalls(
+    GameState state,
+    List<BorderEdge> oldEdges,
+    List<BorderEdge> newEdges,
+  ) {
+    if (state.actionsRemaining <= 0 || !hasEnergy(state)) return false;
+    if (oldEdges.isEmpty || oldEdges.length != newEdges.length) return false;
+
+    final owner = state.activePlayer.color;
+    for (final e in oldEdges) {
+      if (e.owner != owner) return false;
+    }
+
+    // Crossing check for the new placement
+    if (newEdges.length == 2 && _isCrossing(state, newEdges)) return false;
+
+    // Connectivity check
+    final oldEdgesSet = oldEdges.toSet();
+    final removedBorders =
+        state.board.borders.where((b) => !oldEdgesSet.contains(b)).toList();
+
+    for (final e in newEdges) {
+      if (!e.anchor.isOnBoard) return false;
+      final neighbor = BorderHelper.getNeighbor(e.anchor, e.orientation);
+      if (!neighbor.isOnBoard) return false;
+      if (BorderHelper.findEdgeBetween(e.anchor, neighbor, removedBorders) !=
+          null) {
+        return false;
+      }
+    }
+
+    final tempBorders = [...removedBorders, ...newEdges];
+    return areaDetector.allCellsConnected(state.board.cells, tempBorders);
+  }
+
+  GameState relocateWalls(
+    GameState state,
+    List<BorderEdge> oldEdges,
+    List<BorderEdge> newEdges,
+  ) {
+    _ensure(canRelocateWalls(state, oldEdges, newEdges), '壁を移動できません。');
+
+    final player = state.activePlayer;
+    final updatedPlayer = player.copyWith(energy: player.energy - 1);
+
+    final oldEdgesSet = oldEdges.toSet();
+    final removedBorders = state.board.borders
+        .where((b) => !oldEdgesSet.contains(b))
+        .toList();
+
+    final groupId = oldEdges.first.groupId ?? DateTime.now().toIso8601String();
+    final updatedNewEdges = newEdges
+        .map(
+          (e) => e.copyWith(owner: state.activePlayer.color, groupId: groupId),
+        )
+        .toList();
+
+    return state.copyWith(
+      board: state.board.copyWith(
+        borders: [...removedBorders, ...updatedNewEdges],
+      ),
+      players: _replacePlayer(state.players, updatedPlayer),
+      actionsRemaining: state.actionsRemaining - 1,
+    );
+  }
+
+  GameState useDoubleMove(GameState state, Position target) {
+    _ensure(canUseDoubleMove(state, target), '2マス移動ができません。');
+
+    final player = state.activePlayer;
+    final updatedPlayer = player.copyWith(energy: player.energy - 1);
+
+    var newState = state.copyWith(
+      players: _replacePlayer(state.players, updatedPlayer),
+    );
+    newState = _applyMove(newState, target);
+    newState = _collectEnergyIfAny(newState, target);
+
+    return newState.copyWith(actionsRemaining: state.actionsRemaining - 1);
+  }
+
+  GameState passAction(GameState state) {
+    return state.copyWith(actionsRemaining: state.actionsRemaining - 1);
   }
 
   GameState _applyMove(GameState state, Position destination) {
@@ -198,193 +370,51 @@ class GameRuleService {
     );
   }
 
-  GameState placeBorder(
-    GameState state,
-    Position anchor,
-    BorderOrientation orientation,
-  ) {
-    _ensure(canPlaceBorder(state, anchor, orientation), '境界を配置できません。');
+  GameState _collectEnergyIfAny(GameState state, Position pos) {
+    final stack = state.board.stackAt(pos);
+    if (!stack.hasTokens) return state;
 
-    final newEdge = BorderEdge(
-      anchor: anchor,
-      orientation: orientation,
-      owner: state.activePlayer.color,
-    );
-
-    final updatedBorders = [...state.board.borders, newEdge];
-    final updatedPlayer = state.activePlayer.copyWith(
-      remainingBorders: state.activePlayer.remainingBorders - 1,
-    );
-
-    return state.copyWith(
-      board: state.board.copyWith(borders: updatedBorders),
-      players: _replacePlayer(state.players, updatedPlayer),
-      hasTakenBasicAction: true,
-    );
-  }
-
-  GameState collectEnergy(GameState state, Position energyPosition) {
-    _ensure(canCollectEnergy(state, energyPosition), 'エネルギーを取得できません。');
-
-    final stack = state.board.stackAt(energyPosition);
     final updatedStack = stack.copyWith(count: stack.count - 1);
     final newStacks = _replaceEnergyStack(
       state.board.energyStacks,
       updatedStack,
     );
     final updatedBoard = state.board.copyWith(energyStacks: newStacks);
-    final newEnergy = (state.activePlayer.energy + 1).clamp(
-      0,
-      GameConstants.maxEnergyTokens,
+
+    final updatedPlayer = state.activePlayer.copyWith(
+      energy: state.activePlayer.energy + 1,
     );
-    final updatedPlayer = state.activePlayer.copyWith(energy: newEnergy);
 
     return state.copyWith(
       board: updatedBoard,
       players: _replacePlayer(state.players, updatedPlayer),
-      hasTakenBasicAction: true,
     );
-  }
-
-  GameState specialMove(GameState state, Position destination) {
-    _ensure(canUseSpecialMove(state, destination), '特殊移動を実行できません。');
-
-    final movedState = _applyMove(state, destination);
-    final afterCost = _deductEnergy(movedState, specialMoveCost);
-    return afterCost;
-  }
-
-  GameState breakBorder(GameState state, BorderEdge edge) {
-    _ensure(canBreakBorder(state, edge), '境界破壊を実行できません。');
-
-    final targetNeighbor = BorderHelper.getNeighbor(
-      edge.anchor,
-      edge.orientation,
-    );
-    final existing = BorderHelper.findEdgeBetween(
-      edge.anchor,
-      targetNeighbor,
-      state.board.borders,
-    );
-    _ensure(existing != null, '対象の境界が見つかりません。');
-
-    final updatedBorders = state.board.borders
-        .where((border) => border != existing)
-        .toList();
-
-    final afterCost = _deductEnergy(
-      state.copyWith(board: state.board.copyWith(borders: updatedBorders)),
-      specialBreakCost,
-    );
-
-    return afterCost;
-  }
-
-  GameState fortifyArea(GameState state, Set<Position> area) {
-    _ensure(canFortifyArea(state, area), '要塞化できるエリアではありません。');
-
-    final perimeter = areaDetector
-        .perimeterBorders(state.board, area)
-        .where((edge) => edge.owner == state.activePlayer.color)
-        .toSet();
-
-    final updatedBorders = state.board.borders.map((edge) {
-      if (perimeter.contains(edge)) {
-        return edge.copyWith(isFortified: true);
-      }
-      return edge;
-    }).toList();
-
-    final afterCost = _deductEnergy(
-      state.copyWith(board: state.board.copyWith(borders: updatedBorders)),
-      specialFortifyCost,
-    );
-
-    return afterCost;
   }
 
   GameState endTurn(GameState state) {
-    final nextTurn = state.currentTurn.opponent;
-    final refreshedBoard = _refillCenterEnergy(state.board);
-
     return state.copyWith(
-      board: refreshedBoard,
-      currentTurn: nextTurn,
+      currentTurn: state.currentTurn.opponent,
       turnCount: state.turnCount + 1,
-      hasTakenBasicAction: false,
+      actionsRemaining: GameConstants.actionsPerTurn,
     );
   }
 
-  GameState _deductEnergy(GameState state, int cost) {
-    final player = state.activePlayer;
-    final updatedPlayer = player.copyWith(energy: player.energy - cost);
-    return state.copyWith(
-      players: _replacePlayer(state.players, updatedPlayer),
-    );
-  }
-
-  List<Player> _replacePlayer(List<Player> players, Player updated) =>
-      players.map((player) {
-        if (player.color == updated.color) {
-          return updated;
-        }
-        return player;
-      }).toList();
+  List<Player> _replacePlayer(List<Player> players, Player updated) => players
+      .map((player) => player.color == updated.color ? updated : player)
+      .toList();
 
   List<EnergyTokenStack> _replaceEnergyStack(
     List<EnergyTokenStack> current,
     EnergyTokenStack updated,
   ) {
-    final filtered = current.where(
-      (stack) => stack.position != updated.position,
-    );
-    final combined = [...filtered];
-    if (updated.count > 0) {
-      combined.add(updated);
-    }
-    return combined;
-  }
-
-  Board _refillCenterEnergy(Board board) {
-    final centerIndex = GameConstants.boardSize ~/ 2;
-    final centerPosition = Position(row: centerIndex, col: centerIndex);
-    final currentCount = board.stackAt(centerPosition).count;
-
-    if (currentCount < GameConstants.initialCenterEnergy) {
-      final updatedStack = EnergyTokenStack(
-        position: centerPosition,
-        count: GameConstants.initialCenterEnergy,
-      );
-      final stacks = _replaceEnergyStack(board.energyStacks, updatedStack);
-      return board.copyWith(energyStacks: stacks);
-    }
-    return board;
-  }
-
-  bool _adjacentToControlledCell(
-    Board board,
-    Position energyPosition,
-    PlayerColor color,
-  ) {
-    for (final neighbor in BorderHelper.orthogonalNeighbors(energyPosition)) {
-      if (!neighbor.isOnBoard) {
-        continue;
-      }
-      if (board.cellAt(neighbor).owner == color) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  bool _isCenter(Position position) {
-    final center = GameConstants.boardSize ~/ 2;
-    return position.row == center && position.col == center;
+    final filtered = current
+        .where((stack) => stack.position != updated.position)
+        .toList();
+    if (updated.count > 0) filtered.add(updated);
+    return filtered;
   }
 
   void _ensure(bool condition, String message) {
-    if (!condition) {
-      throw InvalidActionException(message);
-    }
+    if (!condition) throw InvalidActionException(message);
   }
 }

@@ -1,6 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:weave_the_border/core/constants/game_constants.dart';
-import 'package:weave_the_border/models/game/border_edge.dart';
 import 'package:weave_the_border/models/game/game_state.dart';
 import 'package:weave_the_border/models/game/player_color.dart';
 import 'package:weave_the_border/models/game/position.dart';
@@ -12,14 +10,13 @@ void main() {
       final state = GameState.initial();
       final result = const ScoreCalculator().evaluate(state);
 
-      expect(result[PlayerColor.white]?.territoryCount, equals(1));
-      expect(result[PlayerColor.white]?.completedAreas, equals(0));
-      expect(result[PlayerColor.white]?.energy, equals(0));
-      expect(result[PlayerColor.white]?.total, equals(1));
-      expect(result[PlayerColor.black]?.total, equals(1));
+      expect(result[PlayerColor.blue]?.territoryCount, equals(1));
+      expect(result[PlayerColor.blue]?.total, equals(1));
+      expect(result[PlayerColor.red]?.territoryCount, equals(1));
+      expect(result[PlayerColor.red]?.total, equals(1));
     });
 
-    test('囲まれたエリアとエネルギーが合計スコアに加算される', () {
+    test('領域数が合計スコアになる', () {
       final base = GameState.initial();
       final areaCells = {
         const Position(row: 1, col: 1),
@@ -27,68 +24,44 @@ void main() {
       };
       final updatedCells = base.board.cells.map((cell) {
         if (areaCells.contains(cell.position)) {
-          return cell.copyWith(owner: PlayerColor.white);
+          return cell.copyWith(owner: PlayerColor.blue);
         }
         return cell;
       }).toList();
 
-      final bordered = base.board.copyWith(
-        cells: updatedCells,
-        borders: [
-          BorderEdge(
-            anchor: const Position(row: 1, col: 1),
-            orientation: BorderOrientation.left,
-            owner: PlayerColor.white,
-          ),
-          BorderEdge(
-            anchor: const Position(row: 1, col: 1),
-            orientation: BorderOrientation.top,
-            owner: PlayerColor.white,
-          ),
-          BorderEdge(
-            anchor: const Position(row: 1, col: 1),
-            orientation: BorderOrientation.bottom,
-            owner: PlayerColor.white,
-          ),
-          BorderEdge(
-            anchor: const Position(row: 1, col: 2),
-            orientation: BorderOrientation.top,
-            owner: PlayerColor.white,
-          ),
-          BorderEdge(
-            anchor: const Position(row: 1, col: 2),
-            orientation: BorderOrientation.right,
-            owner: PlayerColor.white,
-          ),
-          BorderEdge(
-            anchor: const Position(row: 1, col: 2),
-            orientation: BorderOrientation.bottom,
-            owner: PlayerColor.white,
-          ),
-        ],
-      );
+      final bordered = base.board.copyWith(cells: updatedCells);
 
-      final updatedPlayers = base.players.map((player) {
-        if (player.color == PlayerColor.white) {
-          return player.copyWith(energy: 2);
-        }
-        return player;
-      }).toList();
-
-      final customState = base.copyWith(
-        board: bordered,
-        players: updatedPlayers,
-      );
+      final customState = base.copyWith(board: bordered);
 
       final result = const ScoreCalculator().evaluate(customState);
-      final whiteScore = result[PlayerColor.white]!;
+      final blueScore = result[PlayerColor.blue]!;
 
-      expect(whiteScore.completedAreas, equals(1));
-      expect(whiteScore.energy, equals(2));
-      expect(
-        whiteScore.total,
-        equals(whiteScore.territoryCount + GameConstants.areaBonusScore + 2),
+      expect(blueScore.territoryCount, equals(3)); // Initial 1 + 2 new
+      expect(blueScore.total, equals(3));
+    });
+
+    test('15マス到達で勝利判定', () {
+      final base = GameState.initial();
+      final calculator = const ScoreCalculator();
+
+      expect(calculator.winner(base), isNull);
+
+      final winningCells = List.generate(
+        15,
+        (i) => Position(row: i ~/ 7, col: i % 7),
       );
+      final updatedCells = base.board.cells.map((cell) {
+        if (winningCells.contains(cell.position)) {
+          return cell.copyWith(owner: PlayerColor.blue);
+        }
+        return cell;
+      }).toList();
+
+      final winningState = base.copyWith(
+        board: base.board.copyWith(cells: updatedCells),
+      );
+
+      expect(calculator.winner(winningState), equals(PlayerColor.blue));
     });
   });
 }

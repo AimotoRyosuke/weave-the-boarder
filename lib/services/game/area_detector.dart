@@ -1,5 +1,6 @@
 import 'package:weave_the_border/models/game/border_edge.dart';
 import 'package:weave_the_border/models/game/board.dart';
+import 'package:weave_the_border/models/game/cell.dart';
 import 'package:weave_the_border/models/game/player_color.dart';
 import 'package:weave_the_border/models/game/position.dart';
 import 'package:weave_the_border/services/game/border_helper.dart';
@@ -92,5 +93,30 @@ class AreaDetector {
       }
     }
     return perimeter;
+  }
+
+  bool allCellsConnected(List<Cell> allCells, List<BorderEdge> borders) {
+    if (allCells.isEmpty) return true;
+
+    final start = allCells.first.position;
+    final visited = <String>{start.key};
+    final queue = <Position>[start];
+
+    while (queue.isNotEmpty) {
+      final current = queue.removeAt(0);
+
+      for (final neighbor in BorderHelper.orthogonalNeighbors(current)) {
+        if (!neighbor.isOnBoard) continue;
+        if (visited.contains(neighbor.key)) continue;
+        if (BorderHelper.hasBorderBetween(current, neighbor, borders)) {
+          continue;
+        }
+
+        visited.add(neighbor.key);
+        queue.add(neighbor);
+      }
+    }
+
+    return visited.length == allCells.length;
   }
 }
