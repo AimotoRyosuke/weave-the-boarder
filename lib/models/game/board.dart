@@ -42,20 +42,23 @@ sealed class Board with _$Board {
       }
     }
 
-    // Energy placement: 1 in row 4, 2 in row 3, 2 in row 2 (relative to blue at row 6)
+    // Energy placement from blue's side (blue starts at row 6):
+    // - Front side (手前側・4行目)  -> row 4: 1 token
+    // - Center    (中央・3行目)    -> row 3: 2 tokens
+    // - Back side (奥側・2行目)    -> row 2: 2 tokens
     final random = math.Random(seed);
     final energyPositions = <Position>[];
 
-    // Row 4: 1 token
+    // Front side (手前側・4行目 = row 4): 1 token
     final cols4 = List.generate(size, (i) => i)..shuffle(random);
     energyPositions.add(Position(row: 4, col: cols4.first));
 
-    // Row 3: 2 tokens
+    // Center (中央・3行目 = row 3): 2 tokens
     final cols3 = List.generate(size, (i) => i)..shuffle(random);
     energyPositions.add(Position(row: 3, col: cols3[0]));
     energyPositions.add(Position(row: 3, col: cols3[1]));
 
-    // Row 2: 2 tokens
+    // Back side (奥側・2行目 = row 2): 2 tokens
     final cols2 = List.generate(size, (i) => i)..shuffle(random);
     energyPositions.add(Position(row: 2, col: cols2[0]));
     energyPositions.add(Position(row: 2, col: cols2[1]));
