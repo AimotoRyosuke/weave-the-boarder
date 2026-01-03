@@ -8,13 +8,14 @@ void main() {
   group('Player', () {
     test('所持情報と JSON 変換', () {
       final player = Player(
-        color: PlayerColor.white,
-        piecePosition: Position(row: 0, col: 0),
+        color: PlayerColor.blue,
+        piecePosition: const Position(row: 0, col: 0),
       );
       final restored = Player.fromJson(player.toJson());
 
       expect(player.isOnBoard, isTrue);
-      expect(player.remainingBorders, GameConstants.borderTokensPerPlayer);
+      expect(player.shortWalls, GameConstants.shortWallTokensPerPlayer);
+      expect(player.longWalls, GameConstants.longWallTokensPerPlayer);
       expect(restored, equals(player));
     });
   });

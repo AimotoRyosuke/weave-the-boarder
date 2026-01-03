@@ -16,7 +16,4 @@ Map<String, dynamic> _$CellToJson(_Cell instance) => <String, dynamic>{
   'owner': _$PlayerColorEnumMap[instance.owner],
 };
 
-const _$PlayerColorEnumMap = {
-  PlayerColor.white: 'white',
-  PlayerColor.black: 'black',
-};
+const _$PlayerColorEnumMap = {PlayerColor.blue: 'blue', PlayerColor.red: 'red'};

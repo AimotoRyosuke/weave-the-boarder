@@ -13,7 +13,8 @@ sealed class Player with _$Player {
   const factory Player({
     required PlayerColor color,
     required Position piecePosition,
-    @Default(GameConstants.borderTokensPerPlayer) int remainingBorders,
+    @Default(GameConstants.shortWallTokensPerPlayer) int shortWalls,
+    @Default(GameConstants.longWallTokensPerPlayer) int longWalls,
     @Default(0) int energy,
   }) = _Player;
 
