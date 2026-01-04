@@ -1,11 +1,12 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:weave_the_border/core/constants/app_colors.dart';
 
 /// ガラス質感の横長カード。タイトルと説明、アイコン、トレーリングウィジェットを受け取る。
-class GlassyChoiceCard extends StatefulWidget {
-  const GlassyChoiceCard({
+class ChoiceCard extends HookWidget {
+  const ChoiceCard({
     super.key,
     required this.title,
     required this.description,
@@ -23,37 +24,21 @@ class GlassyChoiceCard extends StatefulWidget {
   final Widget? trailing;
 
   @override
-  State<GlassyChoiceCard> createState() => _GlassyChoiceCardState();
-}
-
-class _GlassyChoiceCardState extends State<GlassyChoiceCard> {
-  bool _isPressed = false;
-
-  void _setPressed(bool pressed) {
-    if (_isPressed == pressed) return;
-    setState(() => _isPressed = pressed);
-  }
-
-  void _handleTap() {
-    if (widget.onTap != null) {
-      widget.onTap!();
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final borderColor = _isPressed
+    final isPressed = useState(false);
+
+    final borderColor = isPressed.value
         ? AppColors.goldBorderLight
         : AppColors.goldBorder;
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
-      onTapDown: (_) => _setPressed(true),
-      onTapUp: (_) => _setPressed(false),
-      onTapCancel: () => _setPressed(false),
-      onTap: _handleTap,
+      onTapDown: (_) => isPressed.value = true,
+      onTapUp: (_) => isPressed.value = false,
+      onTapCancel: () => isPressed.value = false,
+      onTap: onTap,
       child: AnimatedScale(
-        scale: _isPressed ? 0.98 : 1.0,
+        scale: isPressed.value ? 0.98 : 1.0,
         duration: const Duration(milliseconds: 120),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(18),
@@ -67,8 +52,8 @@ class _GlassyChoiceCardState extends State<GlassyChoiceCard> {
                 border: Border.all(color: borderColor, width: 1),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withAlpha(_isPressed ? 89 : 64),
-                    blurRadius: _isPressed ? 26 : 18,
+                    color: Colors.black.withAlpha(isPressed.value ? 89 : 64),
+                    blurRadius: isPressed.value ? 26 : 18,
                     offset: const Offset(0, 8),
                   ),
                 ],
@@ -80,22 +65,18 @@ class _GlassyChoiceCardState extends State<GlassyChoiceCard> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: widget.accentColor.withAlpha(46),
+                      color: accentColor.withAlpha(46),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: widget.accentColor.withAlpha(76),
+                          color: accentColor.withAlpha(76),
                           blurRadius: 14,
                           offset: const Offset(0, 6),
                         ),
                       ],
                     ),
                     child: Center(
-                      child: Icon(
-                        widget.icon,
-                        color: widget.accentColor,
-                        size: 24,
-                      ),
+                      child: Icon(icon, color: accentColor, size: 24),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -105,7 +86,7 @@ class _GlassyChoiceCardState extends State<GlassyChoiceCard> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          widget.title,
+                          title,
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 17,
@@ -114,7 +95,7 @@ class _GlassyChoiceCardState extends State<GlassyChoiceCard> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          widget.description,
+                          description,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -127,7 +108,7 @@ class _GlassyChoiceCardState extends State<GlassyChoiceCard> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  widget.trailing ??
+                  trailing ??
                       Icon(
                         Icons.arrow_forward_ios,
                         color: Colors.white.withAlpha(153),

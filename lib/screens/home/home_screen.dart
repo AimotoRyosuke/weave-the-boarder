@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:weave_the_border/screens/game/local_game_screen.dart'; // Add this import
-import 'package:weave_the_border/widgets/glassy_choice_card.dart';
+import 'package:weave_the_border/widgets/choice_card.dart';
 import 'package:weave_the_border/models/game_mode.dart';
 
 /// フェーズ4では仮UIとしてモード選択のカードを表示。
@@ -68,7 +68,7 @@ class _ModeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassyChoiceCard(
+    return ChoiceCard(
       title: mode.title,
       description: mode.description,
       icon: mode.icon,

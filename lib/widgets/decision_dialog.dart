@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:weave_the_border/core/constants/app_colors.dart';
 
-class DecisionDialog extends StatefulWidget {
+class DecisionDialog extends StatelessWidget {
   final String title;
   final String content;
   final String cancelLabel;
@@ -41,52 +41,31 @@ class DecisionDialog extends StatefulWidget {
       barrierLabel: 'Dismiss',
       barrierColor: Colors.black.withValues(alpha: 0.6),
       pageBuilder: (context, animation, secondaryAnimation) {
-        return const SizedBox.shrink(); // Not used because we use transitionBuilder
-      },
-      transitionBuilder: (context, animation, secondaryAnimation, child) {
-        final curve = CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeOutBack,
-        );
-        return ScaleTransition(
-          scale: Tween<double>(begin: 0.96, end: 1.0).animate(curve),
-          child: FadeTransition(
-            opacity: animation,
-            child: DecisionDialog(
-              title: title,
-              content: content,
-              cancelLabel: cancelLabel,
-              confirmLabel: confirmLabel,
-              onCancel: onCancel ?? () => Navigator.of(context).pop(),
-              onConfirm: onConfirm,
-              confirmColor: confirmColor,
-              icon: icon,
-            ),
-          ),
+        return DecisionDialog(
+          title: title,
+          content: content,
+          cancelLabel: cancelLabel,
+          confirmLabel: confirmLabel,
+          onCancel: onCancel ?? () => Navigator.of(context).pop(),
+          onConfirm: onConfirm,
+          confirmColor: confirmColor,
+          icon: icon,
         );
       },
     );
   }
 
   @override
-  State<DecisionDialog> createState() => _DecisionDialogState();
-}
-
-class _DecisionDialogState extends State<DecisionDialog> {
-  @override
   Widget build(BuildContext context) {
     // ダークガラス調の背景色
     final backgroundColor = AppColors.darkGlassBackground.withValues(
       alpha: 0.85,
     );
-    // ゴールドの枠線色
     final borderColor = AppColors.goldBorder.withValues(alpha: 0.8);
-    // 決定ボタンの色（深紅：覚悟の選択）
-    final actionColor = widget.confirmColor ?? AppColors.deepRed;
+    final actionColor = confirmColor ?? AppColors.deepRed;
 
     return Stack(
       children: [
-        // 背景のブラー効果 (Dialog全体を覆う)
         Positioned.fill(
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
@@ -117,14 +96,14 @@ class _DecisionDialogState extends State<DecisionDialog> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // アイコン (任意)
-                    if (widget.icon != null) ...[
-                      Icon(widget.icon, size: 32, color: borderColor),
+                    if (icon != null) ...[
+                      Icon(icon, size: 32, color: borderColor),
                       const SizedBox(height: 16),
                     ],
 
                     // タイトル (明朝/セリフ体・威厳)
                     Text(
-                      widget.title,
+                      title,
                       style: const TextStyle(
                         fontFamily: 'Serif',
                         fontSize: 24,
@@ -138,7 +117,7 @@ class _DecisionDialogState extends State<DecisionDialog> {
                     const SizedBox(height: 20), // 余白調整
                     // 本文 (ゴシック・読みやすさ)
                     Text(
-                      widget.content,
+                      content,
                       style: const TextStyle(
                         fontSize: 16, // サイズ微増
                         color: Colors.white70,
@@ -154,7 +133,7 @@ class _DecisionDialogState extends State<DecisionDialog> {
                         // キャンセルボタン (枠線のみ・視認性UP)
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: widget.onCancel,
+                            onPressed: onCancel,
                             style: OutlinedButton.styleFrom(
                               foregroundColor: Colors.white, // 白文字ではっきり
                               side: BorderSide(
@@ -169,7 +148,7 @@ class _DecisionDialogState extends State<DecisionDialog> {
                               ),
                             ),
                             child: Text(
-                              widget.cancelLabel,
+                              cancelLabel,
                               style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
@@ -182,7 +161,7 @@ class _DecisionDialogState extends State<DecisionDialog> {
                         // 決定ボタン (塗りつぶし・覚悟の赤)
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: widget.onConfirm,
+                            onPressed: onConfirm,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: actionColor,
                               foregroundColor: Colors.white,
@@ -193,7 +172,7 @@ class _DecisionDialogState extends State<DecisionDialog> {
                               ),
                             ),
                             child: Text(
-                              widget.confirmLabel,
+                              confirmLabel,
                               style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
