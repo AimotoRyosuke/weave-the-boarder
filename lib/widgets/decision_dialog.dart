@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:gap/gap.dart';
 import 'package:weave_the_border/core/constants/app_colors.dart';
 
 class DecisionDialog extends StatelessWidget {
@@ -57,7 +58,6 @@ class DecisionDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ダークガラス調の背景色
     final backgroundColor = AppColors.darkGlassBackground.withValues(
       alpha: 0.85,
     );
@@ -86,7 +86,7 @@ class DecisionDialog extends StatelessWidget {
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.6),
                     blurRadius: 24,
-                    offset: const Offset(0, 16), // 下方向に重みを出す
+                    offset: const Offset(0, 16),
                   ),
                 ],
               ),
@@ -95,51 +95,43 @@ class DecisionDialog extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // アイコン (任意)
                     if (icon != null) ...[
                       Icon(icon, size: 32, color: borderColor),
-                      const SizedBox(height: 16),
+                      const Gap(16),
                     ],
 
-                    // タイトル (明朝/セリフ体・威厳)
                     Text(
                       title,
                       style: const TextStyle(
                         fontFamily: 'Serif',
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2, // 字間を広げて威厳を出す
+                        letterSpacing: 1.2,
                         color: Colors.white,
                         height: 1.2,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 20), // 余白調整
-                    // 本文 (ゴシック・読みやすさ)
+                    const Gap(20),
                     Text(
                       content,
                       style: const TextStyle(
-                        fontSize: 16, // サイズ微増
+                        fontSize: 16,
                         color: Colors.white70,
-                        height: 1.8, // 行間広め
+                        height: 1.8,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 32),
-
-                    // ボタンエリア
+                    const Gap(32),
                     Row(
                       children: [
-                        // キャンセルボタン (枠線のみ・視認性UP)
                         Expanded(
                           child: OutlinedButton(
                             onPressed: onCancel,
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.white, // 白文字ではっきり
+                              foregroundColor: Colors.white,
                               side: BorderSide(
-                                color: borderColor.withValues(
-                                  alpha: 0.5,
-                                ), // 薄いゴールド枠
+                                color: borderColor.withValues(alpha: 0.5),
                                 width: 1,
                               ),
                               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -156,9 +148,7 @@ class DecisionDialog extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 16),
-
-                        // 決定ボタン (塗りつぶし・覚悟の赤)
+                        const Gap(16),
                         Expanded(
                           child: ElevatedButton(
                             onPressed: onConfirm,

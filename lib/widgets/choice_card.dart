@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:gap/gap.dart';
 import 'package:weave_the_border/core/constants/app_colors.dart';
 
 /// ガラス質感の横長カード。タイトルと説明、アイコン、トレーリングウィジェットを受け取る。
@@ -47,7 +48,7 @@ class ChoiceCard extends HookWidget {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 140),
               decoration: BoxDecoration(
-                color: const Color.fromRGBO(20, 20, 20, 0.55),
+                color: AppColors.cardColor,
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(color: borderColor, width: 1),
                 boxShadow: [
@@ -79,7 +80,7 @@ class ChoiceCard extends HookWidget {
                       child: Icon(icon, color: accentColor, size: 24),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const Gap(16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,7 +94,7 @@ class ChoiceCard extends HookWidget {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const Gap(4),
                         Text(
                           description,
                           maxLines: 2,
@@ -107,7 +108,7 @@ class ChoiceCard extends HookWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const Gap(12),
                   trailing ??
                       Icon(
                         Icons.arrow_forward_ios,

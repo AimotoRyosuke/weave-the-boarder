@@ -11,4 +11,5 @@ class AppColors {
   static const Color goldBorderLight = Color(0xFFFFE39E);
   static const Color darkGlassBackground = Color(0xFF19191E);
   static const Color deepRed = Color(0xFF8B0000);
+  static const Color cardColor = Color(0x8C121212);
 }
