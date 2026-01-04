@@ -1,0 +1,215 @@
+import 'dart:ui';
+import 'package:flutter/material.dart';
+import 'package:weave_the_border/core/constants/app_colors.dart';
+
+class DecisionDialog extends StatefulWidget {
+  final String title;
+  final String content;
+  final String cancelLabel;
+  final String confirmLabel;
+  final VoidCallback onCancel;
+  final VoidCallback onConfirm;
+  final Color? confirmColor;
+  final IconData? icon;
+
+  const DecisionDialog({
+    super.key,
+    required this.title,
+    required this.content,
+    required this.cancelLabel,
+    required this.confirmLabel,
+    required this.onCancel,
+    required this.onConfirm,
+    this.confirmColor,
+    this.icon,
+  });
+
+  static Future<T?> show<T>(
+    BuildContext context, {
+    required String title,
+    required String content,
+    String cancelLabel = '戦場に戻る',
+    String confirmLabel = '退却する',
+    required VoidCallback onConfirm,
+    VoidCallback? onCancel,
+    Color? confirmColor,
+    IconData? icon,
+  }) {
+    return showGeneralDialog<T>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Dismiss',
+      barrierColor: Colors.black.withValues(alpha: 0.6),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return const SizedBox.shrink(); // Not used because we use transitionBuilder
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curve = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutBack,
+        );
+        return ScaleTransition(
+          scale: Tween<double>(begin: 0.96, end: 1.0).animate(curve),
+          child: FadeTransition(
+            opacity: animation,
+            child: DecisionDialog(
+              title: title,
+              content: content,
+              cancelLabel: cancelLabel,
+              confirmLabel: confirmLabel,
+              onCancel: onCancel ?? () => Navigator.of(context).pop(),
+              onConfirm: onConfirm,
+              confirmColor: confirmColor,
+              icon: icon,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  State<DecisionDialog> createState() => _DecisionDialogState();
+}
+
+class _DecisionDialogState extends State<DecisionDialog> {
+  @override
+  Widget build(BuildContext context) {
+    // ダークガラス調の背景色
+    final backgroundColor = AppColors.darkGlassBackground.withValues(
+      alpha: 0.85,
+    );
+    // ゴールドの枠線色
+    final borderColor = AppColors.goldBorder.withValues(alpha: 0.8);
+    // 決定ボタンの色（深紅：覚悟の選択）
+    final actionColor = widget.confirmColor ?? AppColors.deepRed;
+
+    return Stack(
+      children: [
+        // 背景のブラー効果 (Dialog全体を覆う)
+        Positioned.fill(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(color: Colors.transparent),
+          ),
+        ),
+        Center(
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              width: MediaQuery.of(context).size.width * 0.9,
+              constraints: const BoxConstraints(maxWidth: 400),
+              decoration: BoxDecoration(
+                color: backgroundColor,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: borderColor, width: 1),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    blurRadius: 24,
+                    offset: const Offset(0, 16), // 下方向に重みを出す
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // アイコン (任意)
+                    if (widget.icon != null) ...[
+                      Icon(widget.icon, size: 32, color: borderColor),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // タイトル (明朝/セリフ体・威厳)
+                    Text(
+                      widget.title,
+                      style: const TextStyle(
+                        fontFamily: 'Serif',
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2, // 字間を広げて威厳を出す
+                        color: Colors.white,
+                        height: 1.2,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 20), // 余白調整
+                    // 本文 (ゴシック・読みやすさ)
+                    Text(
+                      widget.content,
+                      style: const TextStyle(
+                        fontSize: 16, // サイズ微増
+                        color: Colors.white70,
+                        height: 1.8, // 行間広め
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 32),
+
+                    // ボタンエリア
+                    Row(
+                      children: [
+                        // キャンセルボタン (枠線のみ・視認性UP)
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: widget.onCancel,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.white, // 白文字ではっきり
+                              side: BorderSide(
+                                color: borderColor.withValues(
+                                  alpha: 0.5,
+                                ), // 薄いゴールド枠
+                                width: 1,
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Text(
+                              widget.cancelLabel,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+
+                        // 決定ボタン (塗りつぶし・覚悟の赤)
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: widget.onConfirm,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: actionColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Text(
+                              widget.confirmLabel,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
