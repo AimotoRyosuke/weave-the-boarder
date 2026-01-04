@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gap/gap.dart';
 import 'package:weave_the_border/core/constants/game_constants.dart';
 import 'package:weave_the_border/models/game/player.dart';
 import 'package:weave_the_border/models/game/player_color.dart';
@@ -27,9 +28,10 @@ class PlayerStatusWidget extends StatelessWidget {
             ? colorScheme.primaryContainer
             : colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
-        border: isActive
-            ? Border.all(color: colorScheme.primary, width: 2)
-            : Border.all(color: Colors.transparent, width: 2),
+        border: Border.all(
+          color: isActive ? colorScheme.primary : Colors.transparent,
+          width: 2,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -37,8 +39,8 @@ class PlayerStatusWidget extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildPlayerCircle(player.color),
-              const SizedBox(width: 8),
+              _PlayerCircle(playerColor: player.color),
+              const Gap(4),
               Text(
                 player.color.displayName,
                 style: TextStyle(
@@ -49,34 +51,88 @@ class PlayerStatusWidget extends StatelessWidget {
                       : colorScheme.onSurfaceVariant,
                 ),
               ),
+              const Gap(8),
+              Text(
+                '${score.territoryCount}',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: isActive
+                      ? colorScheme.onPrimaryContainer
+                      : colorScheme.onSurfaceVariant,
+                ),
+              ),
+              Text(
+                '/${GameConstants.cellsToWin}マス',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isActive
+                      ? colorScheme.onPrimaryContainer
+                      : colorScheme.onSurfaceVariant,
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 4),
+          const Gap(4),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildStat(
-                Icons.terrain,
-                '${score.territoryCount}/${GameConstants.cellsToWin}',
+              _StatusItem(
+                icon: Icons.bolt,
+                value: player.energy.toString(),
+                iconColor: Colors.amber,
               ),
               const SizedBox(width: 8),
-              _buildStat(
-                Icons.bolt,
-                player.energy.toString(),
-                color: Colors.amber,
+              _StatusItem(
+                icon: Icons.remove,
+                value: player.shortWalls.toString(),
               ),
-              const SizedBox(width: 8),
-              _buildStat(Icons.remove, player.shortWalls.toString()),
               const SizedBox(width: 4),
-              _buildStat(Icons.reorder, player.longWalls.toString()),
+              _StatusItem(
+                icon: Icons.reorder,
+                value: player.longWalls.toString(),
+              ),
             ],
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildPlayerCircle(PlayerColor playerColor) {
+class _StatusItem extends StatelessWidget {
+  const _StatusItem({
+    required this.icon,
+    required this.value,
+    this.iconColor = Colors.blueGrey,
+  });
+
+  final IconData icon;
+  final String value;
+  final Color iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: iconColor),
+        const SizedBox(width: 4),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
+  }
+}
+
+class _PlayerCircle extends StatelessWidget {
+  const _PlayerCircle({required this.playerColor});
+
+  final PlayerColor playerColor;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       width: 16,
       height: 16,
@@ -85,20 +141,6 @@ class PlayerStatusWidget extends StatelessWidget {
         shape: BoxShape.circle,
         border: Border.all(color: Colors.white, width: 1),
       ),
-    );
-  }
-
-  Widget _buildStat(IconData icon, String value, {Color? color}) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: color ?? Colors.blueGrey),
-        const SizedBox(width: 2),
-        Text(
-          value,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-        ),
-      ],
     );
   }
 }

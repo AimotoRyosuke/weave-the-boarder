@@ -9,11 +9,10 @@ import 'package:weave_the_border/providers/game/game_controller_provider.dart';
 import 'package:weave_the_border/providers/game/action_provider.dart';
 import 'package:weave_the_border/services/game/game_rule_service.dart';
 import 'package:weave_the_border/services/game/border_helper.dart';
-
-import 'board_cell_widget.dart';
-import 'borders_painter.dart';
-import 'energy_token_widget.dart';
-import 'player_piece_widget.dart';
+import 'package:weave_the_border/screens/game/widgets/board_cell_widget.dart';
+import 'package:weave_the_border/screens/game/widgets/borders_painter.dart';
+import 'package:weave_the_border/screens/game/widgets/energy_token_widget.dart';
+import 'package:weave_the_border/screens/game/widgets/player_piece_widget.dart';
 
 class GameBoardWidget extends ConsumerWidget {
   const GameBoardWidget({super.key, required this.gameState});
@@ -41,7 +40,7 @@ class GameBoardWidget extends ConsumerWidget {
           onTapUp: (details) => _handleTapUp(details, cellSize, ref),
           child: Stack(
             children: [
-              // Grid of cells
+              // 1. グリッドセル (盤面のベース)
               GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: GameConstants.boardSize,
@@ -57,7 +56,7 @@ class GameBoardWidget extends ConsumerWidget {
                 physics: const NeverScrollableScrollPhysics(),
               ),
 
-              // Walls (Borders)
+              // 2. 壁 (境界線) の描画レイヤー
               IgnorePointer(
                 child: CustomPaint(
                   size: Size(boardSize, boardSize),
@@ -72,7 +71,7 @@ class GameBoardWidget extends ConsumerWidget {
                 ),
               ),
 
-              // Player pieces
+              // 3. プレイヤーのコマ
               ...gameState.players.map((player) {
                 return _buildPositioned(
                   position: player.piecePosition,
@@ -86,17 +85,17 @@ class GameBoardWidget extends ConsumerWidget {
                 );
               }),
 
-              // Energy tokens
+              // 4. エネルギートークン
               ...gameState.board.energyStacks.map((stack) {
                 if (!stack.hasTokens) return const SizedBox.shrink();
                 return _buildPositioned(
                   position: stack.position,
                   cellSize: cellSize,
-                  child: IgnorePointer(child: EnergyTokenWidget(stack: stack)),
+                  child: EnergyTokenWidget(stack: stack),
                 );
               }),
 
-              // Movable & Pending hints (Consolidated top layer)
+              // 5. 操作ヒント (移動可能位置や設置予定位置のハイライト)
               ...List.generate(
                 GameConstants.boardSize * GameConstants.boardSize,
                 (index) {
@@ -207,9 +206,12 @@ class GameBoardWidget extends ConsumerWidget {
     if (isLong) {
       if (currentEdge == pending.first) return;
       final first = pending.first;
+      // 同じ向きの辺のみ連結可能
       if (currentEdge.orientation == first.orientation) {
         final diffRow = (currentEdge.anchor.row - first.anchor.row).abs();
         final diffCol = (currentEdge.anchor.col - first.anchor.col).abs();
+
+        // 上下辺の場合は横に隣接、左右辺の場合は縦に隣接しているかチェック
         bool isAdjacent =
             (first.orientation == BorderOrientation.top ||
                 first.orientation == BorderOrientation.bottom)
@@ -224,6 +226,7 @@ class GameBoardWidget extends ConsumerWidget {
         }
       }
     } else {
+      // 短い壁（1辺）の場合は、ドラッグ先のエッジに更新するだけ
       if (currentEdge != pending.first) {
         ref.read(actionProvider.notifier).setPendingEdges([currentEdge]);
       }
@@ -315,6 +318,7 @@ class GameBoardWidget extends ConsumerWidget {
   void _completePendingAction(WidgetRef ref, GameRuleService ruleService) {
     final state = ref.read(actionProvider);
 
+    // 1. 移動アクションの確定処理
     if (state.pendingPosition != null) {
       if (state.pendingPosition != Position.none) {
         if (state.type == ActionType.move) {
@@ -331,8 +335,10 @@ class GameBoardWidget extends ConsumerWidget {
       return;
     }
 
+    // 2. 壁設置・移動アクションの確定処理
     final pending = state.pendingEdges;
     if (pending.isNotEmpty) {
+      // ルールに基づいて設置可能か検証
       final isValid = ruleService.isValidPlacement(
         state: gameState,
         actionType: state.type,
@@ -357,11 +363,14 @@ class GameBoardWidget extends ConsumerWidget {
           ref.read(actionProvider.notifier).reset();
         }
       }
+      // アクション完了後、または無効な場合はリセット
       ref.read(actionProvider.notifier).setPendingEdges([]);
     }
   }
 
+  /// 指定された座標(x, y)にあるエッジ（辺）を特定する
   BorderEdge? _getEdgeAt(double x, double y, double cellSize) {
+    // 座標からグリッドの行・列を計算
     final col = (x / cellSize).floor();
     final row = (y / cellSize).floor();
     if (row < 0 ||
@@ -370,10 +379,15 @@ class GameBoardWidget extends ConsumerWidget {
         col >= GameConstants.boardSize) {
       return null;
     }
+
+    // セル内での相対座標
     final dx = x - col * cellSize;
     final dy = y - row * cellSize;
+
+    // 最も近い辺の向きを取得
     final orientation = _getClosestOrientation(dx, dy, cellSize);
     if (orientation == null) return null;
+
     return BorderEdge(
       anchor: Position(row: row, col: col),
       orientation: orientation,
@@ -381,6 +395,7 @@ class GameBoardWidget extends ConsumerWidget {
     );
   }
 
+  /// セル内の相対座標(dx, dy)から、最も近い辺の向きを判定する
   BorderOrientation? _getClosestOrientation(
     double dx,
     double dy,
@@ -392,8 +407,13 @@ class GameBoardWidget extends ConsumerWidget {
       BorderOrientation.top: dy,
       BorderOrientation.bottom: cellSize - dy,
     };
+
+    // 最も距離が近い辺を探す
     final closest = dists.entries.reduce((a, b) => a.value < b.value ? a : b);
+
+    // セルの中心付近（辺から遠い場合）は反応させない (閾値: セルサイズの30%)
     if (closest.value > cellSize * 0.3) return null;
+
     return closest.key;
   }
 

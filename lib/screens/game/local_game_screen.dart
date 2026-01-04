@@ -86,7 +86,7 @@ class LocalGameScreen extends HookConsumerWidget {
                     vertical: 8.0,
                   ),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       PlayerStatusWidget(
                         player: gameState.player(PlayerColor.blue),
