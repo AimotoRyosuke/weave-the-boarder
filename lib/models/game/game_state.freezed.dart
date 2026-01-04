@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$GameState {
 
- Board get board; List<Player> get players; PlayerColor get currentTurn; int get turnCount;
+ Board get board; List<Player> get players; PlayerColor get currentTurn; int get turnCount; int get actionsRemaining;
 /// Create a copy of GameState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $GameStateCopyWith<GameState> get copyWith => _$GameStateCopyWithImpl<GameState>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is GameState&&(identical(other.board, board) || other.board == board)&&const DeepCollectionEquality().equals(other.players, players)&&(identical(other.currentTurn, currentTurn) || other.currentTurn == currentTurn)&&(identical(other.turnCount, turnCount) || other.turnCount == turnCount));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GameState&&(identical(other.board, board) || other.board == board)&&const DeepCollectionEquality().equals(other.players, players)&&(identical(other.currentTurn, currentTurn) || other.currentTurn == currentTurn)&&(identical(other.turnCount, turnCount) || other.turnCount == turnCount)&&(identical(other.actionsRemaining, actionsRemaining) || other.actionsRemaining == actionsRemaining));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,board,const DeepCollectionEquality().hash(players),currentTurn,turnCount);
+int get hashCode => Object.hash(runtimeType,board,const DeepCollectionEquality().hash(players),currentTurn,turnCount,actionsRemaining);
 
 @override
 String toString() {
-  return 'GameState(board: $board, players: $players, currentTurn: $currentTurn, turnCount: $turnCount)';
+  return 'GameState(board: $board, players: $players, currentTurn: $currentTurn, turnCount: $turnCount, actionsRemaining: $actionsRemaining)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $GameStateCopyWith<$Res>  {
   factory $GameStateCopyWith(GameState value, $Res Function(GameState) _then) = _$GameStateCopyWithImpl;
 @useResult
 $Res call({
- Board board, List<Player> players, PlayerColor currentTurn, int turnCount
+ Board board, List<Player> players, PlayerColor currentTurn, int turnCount, int actionsRemaining
 });
 
 
@@ -65,12 +65,13 @@ class _$GameStateCopyWithImpl<$Res>
 
 /// Create a copy of GameState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? board = null,Object? players = null,Object? currentTurn = null,Object? turnCount = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? board = null,Object? players = null,Object? currentTurn = null,Object? turnCount = null,Object? actionsRemaining = null,}) {
   return _then(_self.copyWith(
 board: null == board ? _self.board : board // ignore: cast_nullable_to_non_nullable
 as Board,players: null == players ? _self.players : players // ignore: cast_nullable_to_non_nullable
 as List<Player>,currentTurn: null == currentTurn ? _self.currentTurn : currentTurn // ignore: cast_nullable_to_non_nullable
 as PlayerColor,turnCount: null == turnCount ? _self.turnCount : turnCount // ignore: cast_nullable_to_non_nullable
+as int,actionsRemaining: null == actionsRemaining ? _self.actionsRemaining : actionsRemaining // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }
@@ -162,10 +163,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Board board,  List<Player> players,  PlayerColor currentTurn,  int turnCount)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Board board,  List<Player> players,  PlayerColor currentTurn,  int turnCount,  int actionsRemaining)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _GameState() when $default != null:
-return $default(_that.board,_that.players,_that.currentTurn,_that.turnCount);case _:
+return $default(_that.board,_that.players,_that.currentTurn,_that.turnCount,_that.actionsRemaining);case _:
   return orElse();
 
 }
@@ -183,10 +184,10 @@ return $default(_that.board,_that.players,_that.currentTurn,_that.turnCount);cas
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Board board,  List<Player> players,  PlayerColor currentTurn,  int turnCount)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Board board,  List<Player> players,  PlayerColor currentTurn,  int turnCount,  int actionsRemaining)  $default,) {final _that = this;
 switch (_that) {
 case _GameState():
-return $default(_that.board,_that.players,_that.currentTurn,_that.turnCount);}
+return $default(_that.board,_that.players,_that.currentTurn,_that.turnCount,_that.actionsRemaining);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -200,10 +201,10 @@ return $default(_that.board,_that.players,_that.currentTurn,_that.turnCount);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Board board,  List<Player> players,  PlayerColor currentTurn,  int turnCount)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Board board,  List<Player> players,  PlayerColor currentTurn,  int turnCount,  int actionsRemaining)?  $default,) {final _that = this;
 switch (_that) {
 case _GameState() when $default != null:
-return $default(_that.board,_that.players,_that.currentTurn,_that.turnCount);case _:
+return $default(_that.board,_that.players,_that.currentTurn,_that.turnCount,_that.actionsRemaining);case _:
   return null;
 
 }
@@ -215,7 +216,7 @@ return $default(_that.board,_that.players,_that.currentTurn,_that.turnCount);cas
 
 @JsonSerializable(explicitToJson: true)
 class _GameState extends GameState {
-  const _GameState({required this.board, required final  List<Player> players, required this.currentTurn, this.turnCount = 0}): _players = players,super._();
+  const _GameState({required this.board, required final  List<Player> players, required this.currentTurn, this.turnCount = 0, this.actionsRemaining = GameConstants.actionsPerTurn}): _players = players,super._();
   factory _GameState.fromJson(Map<String, dynamic> json) => _$GameStateFromJson(json);
 
 @override final  Board board;
@@ -228,6 +229,7 @@ class _GameState extends GameState {
 
 @override final  PlayerColor currentTurn;
 @override@JsonKey() final  int turnCount;
+@override@JsonKey() final  int actionsRemaining;
 
 /// Create a copy of GameState
 /// with the given fields replaced by the non-null parameter values.
@@ -242,16 +244,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GameState&&(identical(other.board, board) || other.board == board)&&const DeepCollectionEquality().equals(other._players, _players)&&(identical(other.currentTurn, currentTurn) || other.currentTurn == currentTurn)&&(identical(other.turnCount, turnCount) || other.turnCount == turnCount));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GameState&&(identical(other.board, board) || other.board == board)&&const DeepCollectionEquality().equals(other._players, _players)&&(identical(other.currentTurn, currentTurn) || other.currentTurn == currentTurn)&&(identical(other.turnCount, turnCount) || other.turnCount == turnCount)&&(identical(other.actionsRemaining, actionsRemaining) || other.actionsRemaining == actionsRemaining));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,board,const DeepCollectionEquality().hash(_players),currentTurn,turnCount);
+int get hashCode => Object.hash(runtimeType,board,const DeepCollectionEquality().hash(_players),currentTurn,turnCount,actionsRemaining);
 
 @override
 String toString() {
-  return 'GameState(board: $board, players: $players, currentTurn: $currentTurn, turnCount: $turnCount)';
+  return 'GameState(board: $board, players: $players, currentTurn: $currentTurn, turnCount: $turnCount, actionsRemaining: $actionsRemaining)';
 }
 
 
@@ -262,7 +264,7 @@ abstract mixin class _$GameStateCopyWith<$Res> implements $GameStateCopyWith<$Re
   factory _$GameStateCopyWith(_GameState value, $Res Function(_GameState) _then) = __$GameStateCopyWithImpl;
 @override @useResult
 $Res call({
- Board board, List<Player> players, PlayerColor currentTurn, int turnCount
+ Board board, List<Player> players, PlayerColor currentTurn, int turnCount, int actionsRemaining
 });
 
 
@@ -279,12 +281,13 @@ class __$GameStateCopyWithImpl<$Res>
 
 /// Create a copy of GameState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? board = null,Object? players = null,Object? currentTurn = null,Object? turnCount = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? board = null,Object? players = null,Object? currentTurn = null,Object? turnCount = null,Object? actionsRemaining = null,}) {
   return _then(_GameState(
 board: null == board ? _self.board : board // ignore: cast_nullable_to_non_nullable
 as Board,players: null == players ? _self._players : players // ignore: cast_nullable_to_non_nullable
 as List<Player>,currentTurn: null == currentTurn ? _self.currentTurn : currentTurn // ignore: cast_nullable_to_non_nullable
 as PlayerColor,turnCount: null == turnCount ? _self.turnCount : turnCount // ignore: cast_nullable_to_non_nullable
+as int,actionsRemaining: null == actionsRemaining ? _self.actionsRemaining : actionsRemaining // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }

@@ -5,6 +5,7 @@ import 'package:weave_the_border/models/game/cell.dart';
 import 'package:weave_the_border/models/game/energy_token_stack.dart';
 import 'package:weave_the_border/models/game/player_color.dart';
 import 'package:weave_the_border/models/game/position.dart';
+import 'dart:math' as math;
 
 part 'board.freezed.dart';
 part 'board.g.dart';
@@ -21,33 +22,50 @@ sealed class Board with _$Board {
 
   factory Board.fromJson(Map<String, dynamic> json) => _$BoardFromJson(json);
 
-  static Board initial() {
+  static Board initial({int? seed}) {
     final cells = <Cell>[];
     final size = GameConstants.boardSize;
+
+    const blueStart = Position(row: 6, col: 3);
+    const redStart = Position(row: 0, col: 3);
+
     for (var row = 0; row < size; row++) {
       for (var col = 0; col < size; col++) {
+        final pos = Position(row: row, col: col);
         PlayerColor? owner;
-        if (row == 0 && col == 0) {
-          owner = PlayerColor.white;
-        } else if (row == size - 1 && col == size - 1) {
-          owner = PlayerColor.black;
+        if (pos == blueStart) {
+          owner = PlayerColor.blue;
+        } else if (pos == redStart) {
+          owner = PlayerColor.red;
         }
-        cells.add(
-          Cell(
-            position: Position(row: row, col: col),
-            owner: owner,
-          ),
-        );
+        cells.add(Cell(position: pos, owner: owner));
       }
     }
 
-    final centerIndex = size ~/ 2;
-    final energyStacks = [
-      EnergyTokenStack(
-        position: Position(row: centerIndex, col: centerIndex),
-        count: GameConstants.initialCenterEnergy,
-      ),
-    ];
+    // Energy placement from blue's side (blue starts at row 6):
+    // - Front side (手前側・4行目)  -> row 4: 1 token
+    // - Center    (中央・3行目)    -> row 3: 2 tokens
+    // - Back side (奥側・2行目)    -> row 2: 2 tokens
+    final random = math.Random(seed);
+    final energyPositions = <Position>[];
+
+    // Front side (手前側・4行目 = row 4): 1 token
+    final cols4 = List.generate(size, (i) => i)..shuffle(random);
+    energyPositions.add(Position(row: 4, col: cols4.first));
+
+    // Center (中央・3行目 = row 3): 2 tokens
+    final cols3 = List.generate(size, (i) => i)..shuffle(random);
+    energyPositions.add(Position(row: 3, col: cols3[0]));
+    energyPositions.add(Position(row: 3, col: cols3[1]));
+
+    // Back side (奥側・2行目 = row 2): 2 tokens
+    final cols2 = List.generate(size, (i) => i)..shuffle(random);
+    energyPositions.add(Position(row: 2, col: cols2[0]));
+    energyPositions.add(Position(row: 2, col: cols2[1]));
+
+    final energyStacks = energyPositions
+        .map((pos) => EnergyTokenStack(position: pos, count: 1))
+        .toList();
 
     return Board(cells: cells, energyStacks: energyStacks);
   }
@@ -65,4 +83,12 @@ sealed class Board with _$Board {
   }
 
   bool hasEnergyAt(Position position) => stackAt(position).hasTokens;
+
+  Position positionFromIndex(int index) {
+    final size = GameConstants.boardSize;
+    if (index < 0 || index >= size * size) {
+      throw RangeError('Invalid index: $index');
+    }
+    return Position(row: index ~/ size, col: index % size);
+  }
 }

@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Player {
 
- PlayerColor get color; Position get piecePosition; int get remainingBorders; int get energy;
+ PlayerColor get color; Position get piecePosition; int get shortWalls; int get longWalls; int get energy;
 /// Create a copy of Player
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $PlayerCopyWith<Player> get copyWith => _$PlayerCopyWithImpl<Player>(this as Pla
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Player&&(identical(other.color, color) || other.color == color)&&(identical(other.piecePosition, piecePosition) || other.piecePosition == piecePosition)&&(identical(other.remainingBorders, remainingBorders) || other.remainingBorders == remainingBorders)&&(identical(other.energy, energy) || other.energy == energy));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Player&&(identical(other.color, color) || other.color == color)&&(identical(other.piecePosition, piecePosition) || other.piecePosition == piecePosition)&&(identical(other.shortWalls, shortWalls) || other.shortWalls == shortWalls)&&(identical(other.longWalls, longWalls) || other.longWalls == longWalls)&&(identical(other.energy, energy) || other.energy == energy));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,color,piecePosition,remainingBorders,energy);
+int get hashCode => Object.hash(runtimeType,color,piecePosition,shortWalls,longWalls,energy);
 
 @override
 String toString() {
-  return 'Player(color: $color, piecePosition: $piecePosition, remainingBorders: $remainingBorders, energy: $energy)';
+  return 'Player(color: $color, piecePosition: $piecePosition, shortWalls: $shortWalls, longWalls: $longWalls, energy: $energy)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $PlayerCopyWith<$Res>  {
   factory $PlayerCopyWith(Player value, $Res Function(Player) _then) = _$PlayerCopyWithImpl;
 @useResult
 $Res call({
- PlayerColor color, Position piecePosition, int remainingBorders, int energy
+ PlayerColor color, Position piecePosition, int shortWalls, int longWalls, int energy
 });
 
 
@@ -65,11 +65,12 @@ class _$PlayerCopyWithImpl<$Res>
 
 /// Create a copy of Player
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? color = null,Object? piecePosition = null,Object? remainingBorders = null,Object? energy = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? color = null,Object? piecePosition = null,Object? shortWalls = null,Object? longWalls = null,Object? energy = null,}) {
   return _then(_self.copyWith(
 color: null == color ? _self.color : color // ignore: cast_nullable_to_non_nullable
 as PlayerColor,piecePosition: null == piecePosition ? _self.piecePosition : piecePosition // ignore: cast_nullable_to_non_nullable
-as Position,remainingBorders: null == remainingBorders ? _self.remainingBorders : remainingBorders // ignore: cast_nullable_to_non_nullable
+as Position,shortWalls: null == shortWalls ? _self.shortWalls : shortWalls // ignore: cast_nullable_to_non_nullable
+as int,longWalls: null == longWalls ? _self.longWalls : longWalls // ignore: cast_nullable_to_non_nullable
 as int,energy: null == energy ? _self.energy : energy // ignore: cast_nullable_to_non_nullable
 as int,
   ));
@@ -162,10 +163,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PlayerColor color,  Position piecePosition,  int remainingBorders,  int energy)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PlayerColor color,  Position piecePosition,  int shortWalls,  int longWalls,  int energy)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Player() when $default != null:
-return $default(_that.color,_that.piecePosition,_that.remainingBorders,_that.energy);case _:
+return $default(_that.color,_that.piecePosition,_that.shortWalls,_that.longWalls,_that.energy);case _:
   return orElse();
 
 }
@@ -183,10 +184,10 @@ return $default(_that.color,_that.piecePosition,_that.remainingBorders,_that.ene
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PlayerColor color,  Position piecePosition,  int remainingBorders,  int energy)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PlayerColor color,  Position piecePosition,  int shortWalls,  int longWalls,  int energy)  $default,) {final _that = this;
 switch (_that) {
 case _Player():
-return $default(_that.color,_that.piecePosition,_that.remainingBorders,_that.energy);}
+return $default(_that.color,_that.piecePosition,_that.shortWalls,_that.longWalls,_that.energy);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -200,10 +201,10 @@ return $default(_that.color,_that.piecePosition,_that.remainingBorders,_that.ene
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PlayerColor color,  Position piecePosition,  int remainingBorders,  int energy)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PlayerColor color,  Position piecePosition,  int shortWalls,  int longWalls,  int energy)?  $default,) {final _that = this;
 switch (_that) {
 case _Player() when $default != null:
-return $default(_that.color,_that.piecePosition,_that.remainingBorders,_that.energy);case _:
+return $default(_that.color,_that.piecePosition,_that.shortWalls,_that.longWalls,_that.energy);case _:
   return null;
 
 }
@@ -215,12 +216,13 @@ return $default(_that.color,_that.piecePosition,_that.remainingBorders,_that.ene
 
 @JsonSerializable(explicitToJson: true)
 class _Player extends Player {
-  const _Player({required this.color, required this.piecePosition, this.remainingBorders = GameConstants.borderTokensPerPlayer, this.energy = 0}): super._();
+  const _Player({required this.color, required this.piecePosition, this.shortWalls = GameConstants.shortWallTokensPerPlayer, this.longWalls = GameConstants.longWallTokensPerPlayer, this.energy = 0}): super._();
   factory _Player.fromJson(Map<String, dynamic> json) => _$PlayerFromJson(json);
 
 @override final  PlayerColor color;
 @override final  Position piecePosition;
-@override@JsonKey() final  int remainingBorders;
+@override@JsonKey() final  int shortWalls;
+@override@JsonKey() final  int longWalls;
 @override@JsonKey() final  int energy;
 
 /// Create a copy of Player
@@ -236,16 +238,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Player&&(identical(other.color, color) || other.color == color)&&(identical(other.piecePosition, piecePosition) || other.piecePosition == piecePosition)&&(identical(other.remainingBorders, remainingBorders) || other.remainingBorders == remainingBorders)&&(identical(other.energy, energy) || other.energy == energy));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Player&&(identical(other.color, color) || other.color == color)&&(identical(other.piecePosition, piecePosition) || other.piecePosition == piecePosition)&&(identical(other.shortWalls, shortWalls) || other.shortWalls == shortWalls)&&(identical(other.longWalls, longWalls) || other.longWalls == longWalls)&&(identical(other.energy, energy) || other.energy == energy));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,color,piecePosition,remainingBorders,energy);
+int get hashCode => Object.hash(runtimeType,color,piecePosition,shortWalls,longWalls,energy);
 
 @override
 String toString() {
-  return 'Player(color: $color, piecePosition: $piecePosition, remainingBorders: $remainingBorders, energy: $energy)';
+  return 'Player(color: $color, piecePosition: $piecePosition, shortWalls: $shortWalls, longWalls: $longWalls, energy: $energy)';
 }
 
 
@@ -256,7 +258,7 @@ abstract mixin class _$PlayerCopyWith<$Res> implements $PlayerCopyWith<$Res> {
   factory _$PlayerCopyWith(_Player value, $Res Function(_Player) _then) = __$PlayerCopyWithImpl;
 @override @useResult
 $Res call({
- PlayerColor color, Position piecePosition, int remainingBorders, int energy
+ PlayerColor color, Position piecePosition, int shortWalls, int longWalls, int energy
 });
 
 
@@ -273,11 +275,12 @@ class __$PlayerCopyWithImpl<$Res>
 
 /// Create a copy of Player
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? color = null,Object? piecePosition = null,Object? remainingBorders = null,Object? energy = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? color = null,Object? piecePosition = null,Object? shortWalls = null,Object? longWalls = null,Object? energy = null,}) {
   return _then(_Player(
 color: null == color ? _self.color : color // ignore: cast_nullable_to_non_nullable
 as PlayerColor,piecePosition: null == piecePosition ? _self.piecePosition : piecePosition // ignore: cast_nullable_to_non_nullable
-as Position,remainingBorders: null == remainingBorders ? _self.remainingBorders : remainingBorders // ignore: cast_nullable_to_non_nullable
+as Position,shortWalls: null == shortWalls ? _self.shortWalls : shortWalls // ignore: cast_nullable_to_non_nullable
+as int,longWalls: null == longWalls ? _self.longWalls : longWalls // ignore: cast_nullable_to_non_nullable
 as int,energy: null == energy ? _self.energy : energy // ignore: cast_nullable_to_non_nullable
 as int,
   ));

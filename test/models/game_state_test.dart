@@ -1,39 +1,28 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:weave_the_border/core/constants/game_constants.dart';
 import 'package:weave_the_border/models/game/game_state.dart';
 import 'package:weave_the_border/models/game/player_color.dart';
 import 'package:weave_the_border/models/game/position.dart';
 
 void main() {
-  test('初期状態で2人のプレイヤーと中央にエネルギーが配置される', () {
+  test('初期状態で2人のプレイヤーと5つのエナジーが配置される', () {
     final gameState = GameState.initial();
-    final center = Position(
-      row: GameConstants.boardSize ~/ 2,
-      col: GameConstants.boardSize ~/ 2,
-    );
 
     expect(gameState.players, hasLength(2));
-    expect(gameState.activePlayer.color, PlayerColor.white);
-    expect(gameState.waitingPlayer.color, PlayerColor.black);
-    expect(
-      gameState.board.energyStacks.any(
-        (stack) =>
-            stack.position == center &&
-            stack.count == GameConstants.initialCenterEnergy,
-      ),
-      isTrue,
-    );
+    expect(gameState.activePlayer.color, PlayerColor.blue);
+    expect(gameState.waitingPlayer.color, PlayerColor.red);
+
+    expect(gameState.board.energyStacks.length, equals(5));
     expect(
       gameState.board.cells.where((cell) => cell.owner != null),
       hasLength(2),
     );
     expect(
-      gameState.board.cellAt(gameState.activePlayer.piecePosition).owner,
-      equals(PlayerColor.white),
+      gameState.board.cellAt(const Position(row: 6, col: 3)).owner,
+      equals(PlayerColor.blue),
     );
     expect(
-      gameState.board.cellAt(gameState.waitingPlayer.piecePosition).owner,
-      equals(PlayerColor.black),
+      gameState.board.cellAt(const Position(row: 0, col: 3)).owner,
+      equals(PlayerColor.red),
     );
   });
 

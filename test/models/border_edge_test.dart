@@ -20,7 +20,7 @@ void main() {
       final edge = BorderEdge(
         anchor: Position(row: 2, col: 2),
         orientation: BorderOrientation.right,
-        owner: PlayerColor.white,
+        owner: PlayerColor.blue,
         isFortified: true,
       );
       expect(BorderEdge.fromJson(edge.toJson()), equals(edge));

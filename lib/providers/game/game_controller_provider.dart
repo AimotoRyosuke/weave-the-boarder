@@ -3,6 +3,7 @@ import 'package:weave_the_border/models/game/border_edge.dart';
 import 'package:weave_the_border/models/game/game_state.dart';
 import 'package:weave_the_border/models/game/player_color.dart';
 import 'package:weave_the_border/models/game/position.dart';
+import 'package:weave_the_border/providers/game/action_provider.dart';
 import 'package:weave_the_border/services/game/game_rule_service.dart';
 import 'package:weave_the_border/services/game/score_calculator.dart';
 
@@ -17,27 +18,50 @@ class GameController extends _$GameController {
 
   void resetGame() => state = GameState.initial();
 
-  void movePiece(Position destination) =>
-      state = _ruleService.movePiece(state, destination);
+  void movePiece(Position destination) {
+    state = _ruleService.movePiece(state, destination);
+    _checkAutoEndTurn();
+  }
 
-  void placeBorder(Position anchor, BorderOrientation orientation) =>
-      state = _ruleService.placeBorder(state, anchor, orientation);
+  void placeWall(Position anchor, BorderOrientation orientation) {
+    state = _ruleService.placeWall(state, anchor, orientation);
+    _checkAutoEndTurn();
+  }
 
-  void collectEnergy(Position energyPosition) =>
-      state = _ruleService.collectEnergy(state, energyPosition);
+  void placeLongWall(List<BorderEdge> edges) {
+    state = _ruleService.placeLongWall(state, edges);
+    _checkAutoEndTurn();
+  }
 
-  void specialMove(Position destination) =>
-      state = _ruleService.specialMove(state, destination);
+  void relocateWalls(
+    List<BorderEdge> oldEdges,
+    List<BorderEdge> newEdges,
+  ) {
+    state = _ruleService.relocateWalls(state, oldEdges, newEdges);
+    _checkAutoEndTurn();
+  }
 
-  void breakBorder(BorderEdge edge) =>
-      state = _ruleService.breakBorder(state, edge);
+  void useDoubleMove(Position target) {
+    state = _ruleService.useDoubleMove(state, target);
+    _checkAutoEndTurn();
+  }
 
-  void fortifyArea(Set<Position> area) =>
-      state = _ruleService.fortifyArea(state, area);
+  void passAction() {
+    state = _ruleService.passAction(state);
+    _checkAutoEndTurn();
+  }
 
   void endTurn() => state = _ruleService.endTurn(state);
 
-  Map<PlayerColor, ScoreDetail> currentScore() => _ruleService.score(state);
+  void _checkAutoEndTurn() {
+    if (state.actionsRemaining <= 0) {
+      endTurn();
+      ref.read(actionProvider.notifier).reset();
+    }
+  }
 
-  ScoreDetail scoreFor(PlayerColor color) => _ruleService.detail(state, color);
+  Map<PlayerColor, ScoreDetail> currentScore() => const ScoreCalculator().evaluate(state);
+
+  ScoreDetail scoreFor(PlayerColor color) =>
+      const ScoreCalculator().evaluate(state)[color]!;
 }
