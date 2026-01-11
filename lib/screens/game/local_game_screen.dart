@@ -9,11 +9,12 @@ import 'package:weave_the_border/providers/game/game_controller_provider.dart';
 import 'package:weave_the_border/providers/game/action_provider.dart';
 import 'package:weave_the_border/services/game/game_rule_service.dart';
 import 'package:weave_the_border/services/game/score_calculator.dart';
+import 'package:weave_the_border/widgets/decision_dialog.dart';
 
-import 'widgets/game_board_widget.dart';
-import 'widgets/player_status_widget.dart';
-import 'widgets/action_selector.dart';
-import 'widgets/turn_indicator.dart';
+import 'package:weave_the_border/screens/game/widgets/game_board_widget.dart';
+import 'package:weave_the_border/screens/game/widgets/player_status_widget.dart';
+import 'package:weave_the_border/screens/game/widgets/action_selector.dart';
+import 'package:weave_the_border/screens/game/widgets/turn_indicator.dart';
 
 class LocalGameScreen extends HookConsumerWidget {
   const LocalGameScreen({super.key});
@@ -131,25 +132,14 @@ class LocalGameScreen extends HookConsumerWidget {
   }
 
   Future<bool?> _showExitConfirmation(BuildContext context) {
-    return showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('ゲームを終了しますか？', textAlign: TextAlign.center),
-          content: const Text('プレイ中のゲームデータは保存されません。\nよろしいですか？'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('いいえ'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('はい'),
-            ),
-          ],
-        );
-      },
+    return DecisionDialog.show<bool>(
+      context,
+      title: '決戦を終えますか？',
+      content: '現在の戦況は失われます。\n\nそれでも退却しますか？',
+      cancelLabel: '戦場に戻る',
+      confirmLabel: '退却する',
+      onCancel: () => Navigator.of(context).pop(false),
+      onConfirm: () => Navigator.of(context).pop(true),
     );
   }
 
